@@ -1,6 +1,6 @@
 # DSU-V4
 
-DSU-V4 (Discord Server Utility) is a multi-purpose Discord bot developed with [discord.js](https://discord.js.org/). The project is built with a modular structure to simplify feature expansion and codebase maintenance.
+DSU-V4  is a multi-purpose Discord bot developed with [discord.js](https://discord.js.org/). The project is built with a modular structure to simplify feature expansion and codebase maintenance.
 
 ## Architecture
 

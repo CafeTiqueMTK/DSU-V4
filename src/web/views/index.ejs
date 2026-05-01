@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSU-V4 | Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">DSU-V4</div>
+        <a href="/logout" class="logout-link">Déconnexion</a>
+    </nav>
+
+    <main>
+        <h1>Tableau de bord</h1>
+        <div class="grid" style="margin-top: 2rem;">
+            <div class="card">
+                <h2>Statut du Bot</h2>
+                <div class="stat-value <%= bot.readyAt ? 'status-online' : 'status-offline' %>">
+                    <%= bot.readyAt ? 'En ligne' : 'Hors ligne' %>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Serveurs</h2>
+                <div class="stat-value"><%= bot.guilds.cache.size %></div>
+            </div>
+            <div class="card">
+                <h2>Utilisateurs</h2>
+                <div class="stat-value"><%= bot.users.cache.size %></div>
+            </div>
+            <div class="card">
+                <h2>Commandes</h2>
+                <div class="stat-value"><%= bot.commands.size %></div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

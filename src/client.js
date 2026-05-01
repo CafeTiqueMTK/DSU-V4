@@ -11,6 +11,7 @@ const db = require("./db.js");
 const UpdateChecker = require("./update-checker.js");
 const { config } = require("./utils/env.js");
 const { loadCommands } = require("./utils/commandLoader.js");
+const WebDashboard = require("./web/server.js");
 
 class Bot extends Client {
   constructor() {
@@ -26,6 +27,7 @@ class Bot extends Client {
 
     this.commands = new Collection();
     this.updateChecker = new UpdateChecker(this);
+    this.dashboard = new WebDashboard(this);
   }
 
   async start() {
@@ -54,10 +56,13 @@ class Bot extends Client {
       this.updateChecker.start();
     });
 
-    // 5. Handle Shutdown
+    // 5. Start Web Dashboard
+    this.dashboard.start();
+
+    // 6. Handle Shutdown
     this.setupGracefulShutdown();
 
-    // 6. Login
+    // 7. Login
     try {
       await this.login(config.token);
     } catch (err) {
