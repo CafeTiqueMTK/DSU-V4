@@ -1,0 +1,36 @@
+{
+  "name": "dsu-v4",
+  "version": "1.0.0",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "DEPLOY_COMMANDS=false node src/index.js",
+    "check": "npm run check:syntax && npm run check:commands",
+    "check:syntax": "node --check src/index.js",
+    "check:commands": "node scripts/check-commands.js",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "node-fetch": "^2.6.7",
+    "mongoose": "^7.4.0",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "connect-mongo": "^4.6.0",
+    "passport": "^0.4.1",
+    "passport-discord": "^0.1.4",
+    "passport-local": "^1.0.0",
+    "cookie-parser": "^1.4.6",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.2.5"
+  }
+}
