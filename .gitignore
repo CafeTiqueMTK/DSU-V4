@@ -79,3 +79,4 @@ Thumbs.db
 
 # WAP SDK cache
 .sdk/
+src/wap.js
