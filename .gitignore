@@ -21,6 +21,8 @@ data/
 
 # Local/unrelated SDK workspace
 sdk/
+CHANGELOG.md
+.gitconfig
 
 # Logs
 logs
