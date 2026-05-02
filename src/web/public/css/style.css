@@ -535,9 +535,9 @@ input:checked + .slider:before {
 .settings-layout {
   display: grid;
   grid-template-columns: 80px 1fr;
-  gap: var(--space-xl);
+  gap: var(--space-2xl);
   min-height: calc(100vh - 140px);
-  margin-left: calc(-1 * (80px + var(--space-xl)));
+  margin-left: calc(-1 * (80px + var(--space-2xl)));
 }
 
 /* --- SIDEBAR ICONS --- */
