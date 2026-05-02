@@ -186,9 +186,10 @@ nav .container {
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
   display: grid;
-  grid-template-columns: 1fr;
-  align-content: start;
+  grid-template-rows: auto 1fr; /* Titre en haut, contenu prend le reste */
+  align-items: start;
   gap: var(--space-xs);
+  min-height: 140px; /* Hauteur minimale consistante pour toutes les cartes de stats */
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -202,14 +203,11 @@ nav .container {
 .card-link {
   text-decoration: none;
   color: inherit;
-  display: grid;
 }
 
 .card-centered {
   text-align: center;
   justify-items: center;
-  grid-template-rows: auto auto 1fr;
-  gap: var(--space-md);
 }
 
 .card-title {
@@ -248,23 +246,27 @@ nav .container {
   font-size: 2.2rem;
   font-weight: 700;
   color: var(--color-text-primary);
+  display: flex;
+  align-items: center;
+  height: 100%; /* Centrage vertical dans l'espace restant de la carte */
 }
 
 .status-indicator {
-  display: inline-grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
   gap: var(--space-xs);
   font-size: 0.95rem;
   font-weight: 600;
+  height: 100%; /* Centrage vertical dans l'espace restant de la carte */
 }
 
 .status-indicator::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: inline-block;
 }
 
 .status-online {
@@ -460,14 +462,14 @@ input:checked + .slider:before {
 /* --- GRID SYSTEM --- */
 .grid-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-lg);
 }
 
 .grid-guilds {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-xl);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-lg);
 }
 
 .grid-forms {
@@ -509,6 +511,13 @@ input:checked + .slider:before {
 }
 
 /* --- RESPONSIVE --- */
+@media (max-width: 1024px) {
+  .grid-stats,
+  .grid-guilds {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .section-title {
     font-size: 2rem;
@@ -523,13 +532,11 @@ input:checked + .slider:before {
   .nav-links {
     gap: var(--space-md);
   }
-  .grid-stats {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
-@media (max-width: 480px) {
-  .grid-stats {
+@media (max-width: 580px) {
+  .grid-stats,
+  .grid-guilds {
     grid-template-columns: 1fr;
   }
   .container {

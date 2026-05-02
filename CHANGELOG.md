@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [2026-05-02]
+- fix: unified dashboard grid system (4 equal columns for stats and quick actions)
+- fix: standardized internal card alignment (fixed height, vertical centering of values)
 - fix: refactored dashboard UI using CSS Grid for perfect alignment of text, buttons, and components
 - fix: refined web dashboard UI (increased font sizes, adjusted margins and component dimensions for better readability)
 - feat: added custom web dashboard with authentication (thm.dsu/Thomas49)
