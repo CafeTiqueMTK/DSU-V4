@@ -473,6 +473,18 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
+/* --- PAGE SPECIFIC: GUILDS --- */
+.guilds-container header {
+  padding-left: var(--space-lg); /* Aligne le titre avec le texte interne des cartes */
+}
+
+@media (max-width: 480px) {
+  .guilds-container header {
+    padding-left: 0; /* On retire le décalage sur mobile si l'espace est restreint */
+    text-align: center;
+  }
+}
+
 /* --- GRID SYSTEM --- */
 .grid-stats {
   display: grid;

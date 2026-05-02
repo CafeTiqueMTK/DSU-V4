@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serveurs | DSU-V4</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="logo">DSU-V4</a>
+            <div class="nav-links">
+                <a href="/">Accueil</a>
+                <a href="/guilds">Serveurs</a>
+                <a href="/logout" class="logout-link">Déconnexion</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container guilds-container">
+        <header>
+            <h1 class="section-title">Vos Serveurs</h1>
+            <p class="section-subtitle">Sélectionnez un serveur pour le configurer.</p>
+        </header>
+
+        <div class="grid-guilds">
+            <% bot.guilds.cache.forEach(guild => { %>
+                <div class="card card-centered">
+                    <div class="guild-icon-wrapper">
+                        <% if (guild.icon) { %>
+                            <img src="<%= guild.iconURL() %>" alt="<%= guild.name %>" class="guild-icon">
+                        <% } else { %>
+                            <span class="guild-icon-placeholder"><%= guild.name.charAt(0) %></span>
+                        <% } %>
+                    </div>
+                    <h3 class="guild-name"><%= guild.name %></h3>
+                    <a href="/guilds/<%= guild.id %>" class="btn btn-primary btn-block">Configurer</a>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+</body>
+</html>
