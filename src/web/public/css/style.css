@@ -532,55 +532,143 @@ input:checked + .slider:before {
 }
 
 /* --- SETTINGS LAYOUT --- */
-.settings-container {
+.settings-layout {
   display: grid;
+  grid-template-columns: 80px 1fr;
   gap: var(--space-xl);
+  min-height: calc(100vh - 140px);
 }
 
-.settings-nav-wrapper {
-  display: grid;
-  place-items: center;
-  margin-bottom: var(--space-md);
-}
-
-.settings-tabs {
+/* --- SIDEBAR ICONS --- */
+.sidebar-icons {
+  position: sticky;
+  top: 88px;
   display: flex;
-  gap: var(--space-sm);
-  justify-content: center;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-xs);
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-width: max-content;
+  flex-direction: column;
+  gap: var(--space-xs);
+  height: fit-content;
+  padding: var(--space-md) var(--space-xs);
 }
 
-.settings-tabs::-webkit-scrollbar {
-  display: none;
+.sidebar-separator {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-xs) var(--space-md);
 }
 
-.tab-link {
-  padding: var(--space-sm) var(--space-lg);
+.sidebar-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 50px;
+  padding: 0 var(--space-md);
   text-decoration: none;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  isolation: isolate;
+}
+
+/* Icon styling */
+.icon {
+  width: 24px;
+  height: 24px;
   color: var(--color-text-secondary);
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  border-bottom: 3px solid transparent;
-  white-space: nowrap;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  flex-shrink: 0;
+  transition:
+    color 0.3s ease,
+    transform 0.3s ease;
+  z-index: 2;
 }
 
-.tab-link:hover {
+/* Text styling - initially hidden */
+.icon-text {
+  position: absolute;
+  left: 60px;
   color: var(--color-text-primary);
-  background: rgba(0, 0, 0, 0.02);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+  z-index: 2;
 }
 
-.tab-link.active {
+/* Icon background - frost blur gradient */
+.icon-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    rgba(255, 255, 255, 0.3) 70%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+/* Hover state */
+.sidebar-icon:hover {
+  background: transparent;
+}
+
+.sidebar-icon:hover .icon {
+  color: var(--color-text-primary);
+  transform: scale(1.1);
+}
+
+.sidebar-icon:hover .icon-text {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.1s;
+}
+
+.sidebar-icon:hover .icon-bg {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Active state */
+.sidebar-icon.active .icon {
   color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
-  background: rgba(0, 113, 227, 0.05);
 }
 
+.sidebar-icon.active .icon-bg {
+  opacity: 1;
+  transform: scaleX(1);
+  background: linear-gradient(
+    to right,
+    rgba(0, 113, 227, 0.15) 0%,
+    rgba(0, 113, 227, 0.1) 30%,
+    rgba(0, 113, 227, 0.05) 70%,
+    transparent 100%
+  );
+}
+
+/* Home icon special styling */
+.sidebar-icon.home .icon {
+  color: var(--color-text-tertiary);
+}
+
+.sidebar-icon.home:hover .icon {
+  color: var(--color-text-primary);
+}
+
+/* Settings Content */
 .settings-content {
   display: grid;
   gap: var(--space-xl);
@@ -602,12 +690,31 @@ input:checked + .slider:before {
   grid-column: 1 / -1;
 }
 
-@media (max-width: 600px) {
-  .settings-grid {
+@media (max-width: 900px) {
+  .settings-layout {
     grid-template-columns: 1fr;
   }
-  .settings-nav-wrapper {
-    justify-items: center;
+
+  .sidebar-icons {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .sidebar-separator {
+    display: none;
+  }
+
+  .sidebar-icon {
+    flex-shrink: 0;
+    width: auto;
+    min-width: 50px;
+  }
+
+  .icon-text {
+    display: none;
   }
 }
 
