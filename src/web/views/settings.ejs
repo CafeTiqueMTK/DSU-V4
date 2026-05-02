@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration | <%= guild.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="logo">DSU-V4</a>
+            <div class="nav-links">
+                <a href="/">Accueil</a>
+                <a href="/guilds">Serveurs</a>
+                <a href="/logout" class="logout-link">Déconnexion</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <div class="back-link-wrapper">
+                <a href="/guilds" class="back-link">← Retour</a>
+            </div>
+            <h1 class="section-title"><%= guild.name %></h1>
+            <p class="section-subtitle mb-0">Gestion complète du serveur.</p>
+        </header>
+
+        <% if (success) { %>
+            <div class="alert-success">✓ Modifications enregistrées avec succès</div>
+        <% } %>
+        <% if (error) { %>
+            <div class="alert-danger"><%= error %></div>
+        <% } %>
+
+        <div class="settings-container">
+            <!-- Tabs Navigation -->
+            <div class="settings-nav-wrapper">
+                <nav class="settings-tabs">
+                    <a href="?tab=general" class="tab-link <%= tab === 'general' ? 'active' : '' %>">⚙️ Général</a>
+                    <a href="?tab=moderation" class="tab-link <%= tab === 'moderation' ? 'active' : '' %>">🔨 Modération</a>
+                    <a href="?tab=automod" class="tab-link <%= tab === 'automod' ? 'active' : '' %>">🛡️ Automod</a>
+                    <a href="?tab=logs" class="tab-link <%= tab === 'logs' ? 'active' : '' %>">📜 Logs</a>
+                    <a href="?tab=modules" class="tab-link <%= tab === 'modules' ? 'active' : '' %>">🧩 Modules</a>
+                </nav>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="settings-content">
+                <% if (tab === 'general') { %>
+                <form action="/guilds/<%= guild.id %>/settings/general" method="POST" class="settings-form">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <h2 class="form-section-title">👋 Bienvenue & Départ</h2>
+                            <div class="switch-group">
+                                <span class="form-label mb-0">Activer les messages de bienvenue</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="welcome_enabled" <%= settings.welcome?.enabled ? 'checked' : '' %>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Salon de bienvenue</label>
+                                <select name="welcome_channel" class="form-input select-input">
+                                    <option value="">Aucun</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.welcome?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <hr style="border:0; border-top:1px solid var(--color-border); margin: var(--space-md) 0;">
+
+                            <div class="switch-group">
+                                <span class="form-label mb-0">Activer les messages de départ</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="farewell_enabled" <%= settings.farewell?.enabled ? 'checked' : '' %>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Salon de départ</label>
+                                <select name="farewell_channel" class="form-input select-input">
+                                    <option value="">Aucun</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.farewell?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h2 class="form-section-title">🎭 Rôles</h2>
+                            <div class="switch-group">
+                                <span class="form-label mb-0">Activer l'Autorole (à l'arrivée)</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="autorole_enabled" <%= settings.autorole?.enabled ? 'checked' : '' %>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rôle à attribuer</label>
+                                <select name="autorole_roleId" class="form-input select-input">
+                                    <option value="">Aucun</option>
+                                    <% roles.forEach(role => { %>
+                                        <option value="<%= role.id %>" <%= settings.autorole?.roleId === role.id ? 'selected' : '' %>><%= role.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions mt-lg">
+                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                    </div>
+                </form>
+                <% } %>
+
+                <% if (tab === 'moderation') { %>
+                <div class="settings-grid">
+                    <section class="card full-width">
+                        <h2 class="form-section-title">🔨 Membres & Modération</h2>
+                        <table class="member-list">
+                            <thead>
+                                <tr style="text-align: left; border-bottom: 2px solid var(--color-border);">
+                                    <th class="member-cell form-label">Membre</th>
+                                    <th class="member-cell form-label" style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% members.forEach(member => { %>
+                                <tr class="member-row">
+                                    <td class="member-cell">
+                                        <div class="member-info">
+                                            <img src="<%= member.avatar %>" alt="" class="member-avatar">
+                                            <span class="member-tag"><%= member.tag %></span>
+                                        </div>
+                                    </td>
+                                    <td class="member-cell">
+                                        <div class="member-actions">
+                                            <button class="btn btn-ghost action-btn" onclick="openModModal('warn', '<%= member.id %>', '<%= member.tag %>')">Warn</button>
+                                            <button class="btn btn-ghost action-btn" onclick="openModModal('mute', '<%= member.id %>', '<%= member.tag %>')">Mute</button>
+                                            <button class="btn btn-ghost action-btn action-btn-danger" onclick="openModModal('kick', '<%= member.id %>', '<%= member.tag %>')">Kick</button>
+                                            <button class="btn btn-primary action-btn action-btn-danger" onclick="openModModal('ban', '<%= member.id %>', '<%= member.tag %>')">Ban</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                        <div class="mt-lg">
+                            <p class="card-text">Affichage des 50 premiers membres. Utilisez les commandes Discord pour une recherche précise.</p>
+                        </div>
+                    </section>
+                </div>
+                <% } %>
+
+                <% if (tab === 'automod') { %>
+                <form action="/guilds/<%= guild.id %>/settings/automod" method="POST" class="settings-form">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <h2 class="form-section-title">🛡️ Automod & Sécurité</h2>
+                            <div class="switch-group">
+                                <span class="form-label mb-0">Activer l'Automod global</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="automod_enabled" <%= settings.automod?.enabled ? 'checked' : '' %>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Salon d'alerte (actions automod)</label>
+                                <select name="automod_channel" class="form-input select-input">
+                                    <option value="">Aucun</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.automod?.actionChannel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="antiSpam" <%= settings.antiSpam?.enabled ? 'checked' : '' %>>
+                                    <span>Anti-Spam</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="antiInvites" <%= settings.antiInvites?.enabled ? 'checked' : '' %>>
+                                    <span>Anti-Invitations</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="antiLinks" <%= settings.antiLinks?.enabled ? 'checked' : '' %>>
+                                    <span>Anti-Liens</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="antiRaid" <%= settings.antiRaid?.enabled ? 'checked' : '' %>>
+                                    <span>Anti-Raid</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="antiMassMention" <%= settings.antiMassMention?.enabled ? 'checked' : '' %>>
+                                    <span>Anti-Mass Mention</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions mt-lg">
+                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                    </div>
+                </form>
+                <% } %>
+
+                <% if (tab === 'logs') { %>
+                <form action="/guilds/<%= guild.id %>/settings/logs" method="POST" class="settings-form">
+                    <div class="settings-grid">
+                        <div class="card">
+                            <h2 class="form-section-title">📜 Configuration des Logs</h2>
+                            <div class="switch-group">
+                                <span class="form-label mb-0">Activer le système de logs</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="logs_enabled" <%= settings.logs?.enabled ? 'checked' : '' %>>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Salon de logs principal</label>
+                                <select name="logs_channel" class="form-input select-input">
+                                    <option value="">Aucun</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.logs?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+
+                            <h3 class="form-label mt-lg" style="color: var(--color-text-primary);">Catégories à logger :</h3>
+                            <div class="checkbox-grid">
+                                <% 
+                                    const logCats = settings.logs?.categories || {};
+                                    const allCats = ['arrived', 'farewell', 'vocal', 'mod', 'automod', 'commands', 'roles', 'channels', 'economy', 'messages', 'invites', 'gemini'];
+                                    allCats.forEach(cat => { 
+                                %>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="log_<%= cat %>" <%= logCats[cat] ? 'checked' : '' %>>
+                                        <span><%= cat.charAt(0).toUpperCase() + cat.slice(1) %></span>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions mt-lg">
+                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                    </div>
+                </form>
+                <% } %>
+
+                <% if (tab === 'modules') { %>
+                <div class="settings-grid">
+                    <div class="card">
+                        <h2 class="form-section-title">💰 Economie</h2>
+                        <p class="card-text">Gérez les multiplicateurs, les salaires et les banques.</p>
+                        <div class="mt-lg">
+                            <button class="btn btn-ghost btn-block">Configurer</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2 class="form-section-title">🎫 Tickets</h2>
+                        <p class="card-text">Configuration du système de support.</p>
+                        <div class="mt-lg">
+                            <button class="btn btn-ghost btn-block">Configurer</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2 class="form-section-title">💍 Mariage</h2>
+                        <p class="card-text">Paramètres des unions et divorces.</p>
+                        <div class="mt-lg">
+                            <button class="btn btn-ghost btn-block">Configurer</button>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+
+            </div>
+        </div>
+    </main>
+
+    </main>
+
+    <!-- Modals -->
+    <div id="modModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="form-section-title">Action</h2>
+            <form id="modForm" method="POST">
+                <input type="hidden" name="userId" id="modalUserId">
+                
+                <div class="form-group">
+                    <label class="form-label">Raison</label>
+                    <input type="text" name="reason" class="form-input" placeholder="Optionnel">
+                </div>
+
+                <div id="durationGroup" class="form-group" style="display: none;">
+                    <label class="form-label">Durée (minutes)</label>
+                    <input type="number" name="duration" class="form-input" value="10" min="1">
+                </div>
+
+                <div class="form-actions mt-lg" style="grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+                    <button type="button" class="btn btn-ghost" onclick="closeModModal()">Annuler</button>
+                    <button type="submit" id="modalSubmit" class="btn btn-primary">Confirmer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModModal(action, userId, userTag) {
+            const modal = document.getElementById('modModal');
+            const form = document.getElementById('modForm');
+            const title = document.getElementById('modalTitle');
+            const durationGroup = document.getElementById('durationGroup');
+            const submitBtn = document.getElementById('modalSubmit');
+
+            document.getElementById('modalUserId').value = userId;
+            form.action = `/guilds/<%= guild.id %>/mod/${action}`;
+            
+            title.innerText = `${action.charAt(0).toUpperCase() + action.slice(1)} ${userTag}`;
+            
+            if (action === 'mute') {
+                durationGroup.style.display = 'block';
+            } else {
+                durationGroup.style.display = 'none';
+            }
+
+            if (action === 'ban' || action === 'kick') {
+                submitBtn.classList.add('action-btn-danger');
+            } else {
+                submitBtn.classList.remove('action-btn-danger');
+            }
+
+            modal.classList.add('modal-open');
+        }
+
+        function closeModModal() {
+            document.getElementById('modModal').classList.remove('modal-open');
+        }
+
+        // Close modal on click outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('modModal');
+            if (event.target == modal) {
+                closeModModal();
+            }
+        }
+    </script>
+</body>
+</html>

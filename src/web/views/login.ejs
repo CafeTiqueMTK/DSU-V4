@@ -3,28 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSU-V4 | Connexion</title>
+    <title>Connexion | DSU-V4</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <h1>DSU-V4 Dashboard</h1>
-            <% if (error) { %>
-                <div class="error-message"><%= error %></div>
-            <% } %>
-            <form action="/login" method="POST">
-                <div class="form-group">
-                    <label for="username">Identifiant</label>
-                    <input type="text" id="username" name="username" class="form-control" required autofocus>
-                </div>
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-                <button type="submit" class="btn">Se connecter</button>
-            </form>
-        </div>
+<body class="login-page">
+    <div class="card login-card">
+        <header class="login-header">
+            <h1 class="login-title">DSU-V4</h1>
+            <p class="login-subtitle">Identification requise</p>
+        </header>
+
+        <% if (error) { %>
+            <div class="alert-danger">
+                <%= error %>
+            </div>
+        <% } %>
+
+        <form action="/login" method="POST">
+            <div class="form-group">
+                <label class="form-label">Utilisateur</label>
+                <input type="text" name="username" class="form-input" required autofocus>
+            </div>
+            <div class="form-group mb-xl">
+                <label class="form-label">Mot de passe</label>
+                <input type="password" name="password" class="form-input" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Se connecter</button>
+        </form>
     </div>
 </body>
 </html>
