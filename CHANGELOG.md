@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [2026-05-02]
+- fix: fixed grid layout bug causing vertical stacking on the guilds page
+- fix: ensured all main sections span full width for proper horizontal alignment
 - fix: aligned guilds page components (header and cards) with the left margin of the navigation bar
 - fix: restored left-aligned grid for guilds to ensure margin consistency across sections
 - fix: aligned guilds page header horizontally with card content (padding offset)
