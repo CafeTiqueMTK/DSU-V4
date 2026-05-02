@@ -1,7 +1,14 @@
 // utils/env.js
 const path = require("path");
 
-const requiredEnvVars = ["DISCORD_TOKEN", "CLIENT_ID", "MONGODB_URI", "OWNER_ID", "WEB_PORT", "SESSION_SECRET"];
+const requiredEnvVars = [
+  "DISCORD_TOKEN",
+  "CLIENT_ID",
+  "MONGODB_URI",
+  "OWNER_ID",
+  "WEB_PORT",
+  "SESSION_SECRET",
+];
 
 function validateEnv() {
   const missing = requiredEnvVars.filter((v) => !process.env[v]);
@@ -25,6 +32,8 @@ const config = {
   mongoUri: process.env.MONGODB_URI,
   webPort: process.env.WEB_PORT || 3000,
   sessionSecret: process.env.SESSION_SECRET || "dsu-v4-secret",
+  dashboardUser: process.env.DASHBOARD_USER,
+  dashboardPassword: process.env.DASHBOARD_PASSWORD,
   githubOwner: process.env.GITHUB_OWNER || "CafeTiqueMTK",
   githubRepo: process.env.GITHUB_REPO || "DSU-V4",
   dataPath:

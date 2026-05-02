@@ -219,9 +219,10 @@ class Database {
       { $setOnInsert: { guildId, ...this.getDefaultSettings() } },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-    this.guildSettingsCache.set(guildId, this.normalizeSettings(settings));
+    const normalized = this.normalizeSettings(settings);
+    this.guildSettingsCache.set(guildId, normalized);
     this.rebuildLegacySettingsStore();
-    return settings;
+    return normalized;
   }
 
   async updateSettings(guildId, data) {
@@ -249,6 +250,7 @@ class Database {
   async addWarn(guildId, userId, moderatorId, reason) { return moderationService.addWarn(guildId, userId, moderatorId, reason); }
   async clearWarns(guildId, userId) { return moderationService.clearWarns(guildId, userId); }
   async setUserFrozen(userId, frozen) { return moderationService.setUserFrozen(userId, frozen); }
+  async logModAction(guild, userTag, action, reason, moderator, extra = []) { return moderationService.logModAction(guild, userTag, action, reason, moderator, extra); }
 
   // --- Marriage Delegation ---
   async getMarriage(userId) { return marriageService.getMarriage(userId); }

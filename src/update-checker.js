@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
+const fetch = require("node-fetch");
 const db = require("./db.js");
 const { config: envConfig } = require("./utils/env.js");
 

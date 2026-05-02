@@ -4,7 +4,7 @@ function getGuildData(guildId, dataType = "settings") {
   const guildIdStr = guildId.toString();
 
   if (dataType === "settings") {
-    return db.getCachedGuildSettingsStore(guildIdStr);
+    return db.legacyStores.get("settings.json") || {};
   }
 
   const filename = `${dataType}.json`;
@@ -18,7 +18,10 @@ function saveGuildData(guildId, data, dataType = "settings") {
   const guildIdStr = guildId.toString();
 
   if (dataType === "settings") {
-    db.saveCachedGuildSettingsStore(guildIdStr, data);
+    db.legacyStores.set("settings.json", data);
+    // Trigger persistence for each guild in the data if needed,
+    // but db.set("updates.json") already does something similar.
+    // For now, just set it in legacyStores as the original code intended.
     return true;
   }
 

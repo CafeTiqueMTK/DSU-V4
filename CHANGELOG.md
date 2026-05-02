@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## [2026-05-02]
+- feat: expanded web dashboard with full server management (moderation, logs, automod, general settings)
+- feat: implemented member moderation via web (ban, kick, warn, mute) with modals
+- feat: added detailed configuration for log categories and automod security modules
+- refactor: redesigned settings page with a sidebar layout for better navigation
+- refactor: moved moderation logging to ModerationService for consistency between Discord and Web
 - fix: fixed grid layout bug causing vertical stacking on the guilds page
 - fix: ensured all main sections span full width for proper horizontal alignment
 - fix: aligned guilds page components (header and cards) with the left margin of the navigation bar

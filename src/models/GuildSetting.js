@@ -55,10 +55,10 @@ const guildSettingsSchema = new Schema(
     warnActions: { type: Map, of: String, default: {} },
     moderatorRole: { type: String, default: null },
     marriageConfig: {
-      announcementChannel: { type: String, default: null }
-    }
-
-    }, { timestamps: true, minimize: false, strict: false });
+      announcementChannel: { type: String, default: null },
+    },
+  },
+  { timestamps: true, minimize: false, strict: false },
 );
 
 module.exports = model("GuildSetting", guildSettingsSchema);

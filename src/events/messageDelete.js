@@ -16,7 +16,7 @@ module.exports = {
 
       if (
         guildSettings?.enabled &&
-        guildSettings.categories?.get("ghostPing")?.enabled &&
+        guildSettings.categories?.ghostPing?.enabled &&
         message.mentions?.users?.size > 0
       ) {
         const client = message.client;
@@ -49,7 +49,7 @@ module.exports = {
             const notifChannel =
               message.guild.channels.cache.get(actionChannelId);
             if (notifChannel) {
-              const ghostPingCat = guildSettings.categories.get("ghostPing");
+              const ghostPingCat = guildSettings.categories.ghostPing;
               const embed = new EmbedBuilder()
                 .setTitle("🚨 Automod Action")
                 .addFields(
@@ -71,7 +71,7 @@ module.exports = {
             }
           }
 
-          const sanction = guildSettings.categories.get("ghostPing").sanction;
+          const sanction = guildSettings.categories.ghostPing.sanction;
           if (sanction === "warn") {
             await message.channel?.send(
               `⚠️ <@${message.author.id}> has been warned for **Ghost ping**.`,
