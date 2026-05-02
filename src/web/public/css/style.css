@@ -59,9 +59,8 @@ body {
 
 /* --- LAYOUT & CONTAINERS --- */
 .login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   min-height: 100vh;
   padding: var(--space-lg);
 }
@@ -70,18 +69,20 @@ body {
   width: 100%;
   max-width: 380px;
   padding: var(--space-2xl);
+  display: grid;
+  gap: var(--space-xl);
 }
 
 .login-header {
+  display: grid;
+  gap: var(--space-2xs);
   text-align: center;
-  margin-bottom: var(--space-xl);
 }
 
 .login-title {
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  margin-bottom: var(--space-sm);
 }
 
 .login-subtitle {
@@ -99,14 +100,17 @@ body {
 main {
   padding-top: var(--space-2xl);
   padding-bottom: var(--space-3xl);
+  display: grid;
+  gap: var(--space-2xl);
 }
 
 header {
-  margin-bottom: var(--space-3xl);
+  display: grid;
+  gap: var(--space-xs);
 }
 
 .back-link-wrapper {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-2xs);
 }
 
 .back-link {
@@ -126,7 +130,7 @@ nav {
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   height: 64px;
-  display: flex;
+  display: grid;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
   position: sticky;
@@ -136,8 +140,8 @@ nav {
 
 nav .container {
   width: 100%;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
 }
 
@@ -149,8 +153,11 @@ nav .container {
 }
 
 .nav-links {
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
   gap: var(--space-lg);
+  justify-content: end;
+  align-items: center;
 }
 
 .nav-links a {
@@ -178,6 +185,10 @@ nav .container {
   border: 1px solid var(--color-border);
   padding: var(--space-lg);
   box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: var(--space-xs);
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -191,20 +202,19 @@ nav .container {
 .card-link {
   text-decoration: none;
   color: inherit;
-  display: block;
+  display: grid;
 }
 
 .card-centered {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
+  justify-items: center;
+  grid-template-rows: auto auto 1fr;
+  gap: var(--space-md);
 }
 
 .card-title {
   font-size: 1.15rem;
   font-weight: 600;
-  margin-bottom: var(--space-sm);
 }
 
 .card-text {
@@ -217,7 +227,6 @@ nav .container {
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.021em;
-  margin-bottom: var(--space-md);
 }
 
 .section-subtitle {
@@ -232,7 +241,6 @@ nav .container {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-xs);
 }
 
 /* --- COMPONENTS: STATS --- */
@@ -240,11 +248,11 @@ nav .container {
   font-size: 2.2rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-top: var(--space-2xs);
 }
 
 .status-indicator {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--space-xs);
   font-size: 0.95rem;
@@ -256,6 +264,7 @@ nav .container {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .status-online {
@@ -278,12 +287,10 @@ nav .container {
   height: 80px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: var(--space-md);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
 }
 
 .guild-icon {
@@ -301,14 +308,12 @@ nav .container {
 .guild-name {
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: var(--space-lg);
 }
 
 /* --- COMPONENTS: BUTTONS --- */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-grid;
+  place-items: center;
   padding: 0 16px;
   height: 40px;
   font-size: 0.85rem;
@@ -351,30 +356,30 @@ nav .container {
 
 /* --- COMPONENTS: FORMS --- */
 .form-actions {
-  margin-top: var(--space-2xl);
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  justify-content: end;
 }
 
 .form-section-title {
   font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: var(--space-lg);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .form-group {
+  display: grid;
+  gap: var(--space-xs);
   margin-bottom: var(--space-xl);
 }
 
 .form-label {
-  display: block;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-xs);
 }
 
 .form-input {
@@ -399,9 +404,10 @@ nav .container {
 
 /* Switch Toggle Apple Style */
 .switch-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-md);
   padding: var(--space-md) 0;
 }
 
