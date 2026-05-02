@@ -15,6 +15,10 @@ function validateEnv() {
 }
 
 const config = {
+  production:
+    process.env.RAILWAY_ENVIRONMENT ||
+    process.env.VERCEL ||
+    process.env.NODE_ENV === "production",
   token: process.env.DISCORD_TOKEN,
   clientId: process.env.CLIENT_ID,
   ownerId: process.env.OWNER_ID,
