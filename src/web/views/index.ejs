@@ -8,32 +8,53 @@
 </head>
 <body>
     <nav>
-        <div class="logo">DSU-V4</div>
-        <a href="/logout" class="logout-link">Déconnexion</a>
+        <div class="container">
+            <a href="/" class="logo">DSU-V4</a>
+            <div class="nav-links">
+                <a href="/">Accueil</a>
+                <a href="/guilds">Serveurs</a>
+                <a href="/logout" class="logout-link">Déconnexion</a>
+            </div>
+        </div>
     </nav>
 
-    <main>
-        <h1>Tableau de bord</h1>
-        <div class="grid" style="margin-top: 2rem;">
+    <main class="container">
+        <header>
+            <h1 class="section-title">Tableau de bord</h1>
+            <p class="section-subtitle">Connecté en tant que <strong><%= bot.user.tag %></strong></p>
+        </header>
+
+        <section class="grid-stats">
             <div class="card">
-                <h2>Statut du Bot</h2>
-                <div class="stat-value <%= bot.readyAt ? 'status-online' : 'status-offline' %>">
+                <p class="card-label">Statut</p>
+                <div class="status-indicator <%= bot.readyAt ? 'status-online' : 'status-offline' %>">
                     <%= bot.readyAt ? 'En ligne' : 'Hors ligne' %>
                 </div>
             </div>
             <div class="card">
-                <h2>Serveurs</h2>
+                <p class="card-label">Serveurs</p>
                 <div class="stat-value"><%= bot.guilds.cache.size %></div>
             </div>
             <div class="card">
-                <h2>Utilisateurs</h2>
+                <p class="card-label">Utilisateurs</p>
                 <div class="stat-value"><%= bot.users.cache.size %></div>
             </div>
             <div class="card">
-                <h2>Commandes</h2>
+                <p class="card-label">Commandes</p>
                 <div class="stat-value"><%= bot.commands.size %></div>
             </div>
-        </div>
+        </section>
+
+        <section>
+            <h2 class="form-section-title">Actions rapides</h2>
+            <div class="grid-stats"> <!-- Utilise grid-stats pour aligner parfaitement les colonnes -->
+                <a href="/guilds" class="card card-link">
+                    <p class="card-label">Management</p>
+                    <h3 class="card-title">Gérer les serveurs</h3>
+                    <p class="card-text">Configurez l'automod, les logs et plus encore.</p>
+                </a>
+            </div>
+        </section>
     </main>
 </body>
 </html>

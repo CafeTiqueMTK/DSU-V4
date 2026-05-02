@@ -101,12 +101,26 @@ main {
   padding-top: var(--space-2xl);
   padding-bottom: var(--space-3xl);
   display: grid;
-  gap: var(--space-2xl);
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-lg);
+  align-content: start;
+}
+
+/* Éléments qui doivent prendre toute la largeur pour aligner les marges */
+main > header,
+main > section,
+main > form,
+main > .alert-success,
+main > .alert-danger {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-lg);
 }
 
 header {
   display: grid;
   gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
 .back-link-wrapper {
@@ -468,8 +482,9 @@ input:checked + .slider:before {
 
 .grid-guilds {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-lg);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-xl);
+  justify-content: center; /* Centrage des widgets serveurs */
 }
 
 .grid-forms {

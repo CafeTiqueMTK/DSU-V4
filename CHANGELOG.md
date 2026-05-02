@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [2026-05-02]
+- fix: aligned all section margins using a unified 4-column master grid
+- fix: maintained centered widget layout for the servers page while keeping container alignment
 - fix: unified dashboard grid system (4 equal columns for stats and quick actions)
 - fix: standardized internal card alignment (fixed height, vertical centering of values)
 - fix: refactored dashboard UI using CSS Grid for perfect alignment of text, buttons, and components
