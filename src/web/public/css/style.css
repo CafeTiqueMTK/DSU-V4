@@ -475,12 +475,11 @@ input:checked + .slider:before {
 
 /* --- PAGE SPECIFIC: GUILDS --- */
 .guilds-container header {
-  padding-left: var(--space-lg); /* Aligne le titre avec le texte interne des cartes */
+  /* Aligné sur la marge du container, comme le logo au-dessus */
 }
 
 @media (max-width: 480px) {
   .guilds-container header {
-    padding-left: 0; /* On retire le décalage sur mobile si l'espace est restreint */
     text-align: center;
   }
 }
@@ -496,7 +495,7 @@ input:checked + .slider:before {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-xl);
-  justify-content: center; /* Centrage des widgets serveurs */
+  /* On ne centre plus la grille pour aligner le premier widget sur la marge gauche (logo) */
 }
 
 .grid-forms {

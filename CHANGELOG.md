@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 
 ## [2026-05-02]
+- fix: aligned guilds page components (header and cards) with the left margin of the navigation bar
+- fix: restored left-aligned grid for guilds to ensure margin consistency across sections
 - fix: aligned guilds page header horizontally with card content (padding offset)
 - fix: aligned all section margins using a unified 4-column master grid
 - fix: maintained centered widget layout for the servers page while keeping container alignment
