@@ -174,6 +174,13 @@ class WebDashboard {
               "logs.channel": req.body.logs_channel || null,
               "logs.categories": categories,
             };
+          } else if (section === "economy") {
+            updates = {
+              "level.enabled": req.body.level_enabled === "on",
+              "level.channel": req.body.level_channel || null,
+              "level.message": req.body.level_message === "on",
+              "streak.enabled": req.body.streak_enabled === "on",
+            };
           } else if (section === "embeds") {
             const channel = guild.channels.cache.get(req.body.channel);
             if (channel && channel.isTextBased()) {
