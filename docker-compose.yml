@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: dsu-bot
+    restart: always
+    # Loads local .env for Discord Token, etc.
+    env_file: .env
+    environment:
+      # Overrides MONGO_URI to point to the 'db' service in the docker network
+      - MONGO_URI=mongodb://db:27017/dsu-v4
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./banword.json:/app/banword.json # Keep banwords editable from host
+
+  db:
+    image: mongo:latest
+    container_name: dsu-mongodb
+    restart: always
+    volumes:
+      - dsu_mongo_data:/data/db
+
+volumes:
+  dsu_mongo_data:

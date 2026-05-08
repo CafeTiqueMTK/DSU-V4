@@ -5,8 +5,17 @@ npm-debug.log
 .env.production
 .git
 .gitignore
+.claude
 README.md
+CHANGELOG.md
+archi.md
+CLAUDE.md
+GEMINI.md
 *.log
 .DS_Store
 Thumbs.db
+test-ui.js
+dsu.sh
+Dockerfile
+docker-compose.yml
 
