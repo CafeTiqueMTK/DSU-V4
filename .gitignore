@@ -85,6 +85,8 @@ test-ui.js
 dsu.sh
 
 # Claude Architecture
+.claude/
+CHANGELOG.md
 archi.md
 CLAUDE.md
 GEMINI.md
