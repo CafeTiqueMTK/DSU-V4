@@ -21,7 +21,6 @@ data/
 
 # Local/unrelated SDK workspace
 sdk/
-# CHANGELOG.md (Retiré du gitignore pour suivi doc)
 .gitconfig
 
 # Logs
