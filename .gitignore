@@ -83,6 +83,11 @@ src/wap.js
 
 # Claude Architecture
 # archi.md (Retiré du gitignore pour suivi doc)
+archi.md
+CLAUDE.md
+GEMINI.md
+plan.md
+AI_*.md
 
 # Sensitive data
 .env
