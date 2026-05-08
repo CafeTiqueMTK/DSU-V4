@@ -138,87 +138,155 @@
                 </button>
             </form>
         <% } else if (tab === 'welcome') { %>
-            <form action="/guilds/<%= guild.id %>/settings/welcome" method="POST" class="max-w-4xl space-y-8">
-                <!-- Welcome -->
-                <div class="glass-card rounded-2xl p-6">
-                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-                        <div>
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i data-lucide="user-plus" class="w-5 h-5 text-green-400"></i>
-                                Message de Bienvenue
-                            </h2>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-6xl">
+                <form action="/guilds/<%= guild.id %>/settings/welcome" method="POST" class="space-y-8">
+                    <!-- Welcome -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                            <div>
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i data-lucide="user-plus" class="w-5 h-5 text-green-400"></i>
+                                    Message de Bienvenue
+                                </h2>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="welcome_enabled" class="sr-only peer" <%= settings.welcome?.enabled ? 'checked' : '' %>>
+                                <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:border-green-500 peer-checked:after:bg-white"></div>
+                            </label>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="welcome_enabled" class="sr-only peer" <%= settings.welcome?.enabled ? 'checked' : '' %>>
-                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:border-green-500 peer-checked:after:bg-white"></div>
-                        </label>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
+                                <div class="relative">
+                                    <select name="welcome_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all appearance-none">
+                                        <option value="">Aucun salon</option>
+                                        <% channels.filter(c => c.type === 0).forEach(ch => { %>
+                                            <option value="<%= ch.id %>" <%= settings.welcome?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                        <% }) %>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
+                                <textarea name="welcome_message" id="welcomeMsg" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all resize-none" placeholder="Bienvenue {user} sur {server} !" oninput="updateWelcomePreview()"><%= settings.welcome?.message || '' %></textarea>
+                                <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-bold">Variables : {user}, {server}, {memberCount}</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
-                            <div class="relative">
-                                <select name="welcome_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all appearance-none">
-                                    <option value="">Aucun salon</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.welcome?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <!-- Farewell -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                            <div>
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i data-lucide="user-minus" class="w-5 h-5 text-red-400"></i>
+                                    Message de Départ
+                                </h2>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="farewell_enabled" class="sr-only peer" <%= settings.farewell?.enabled ? 'checked' : '' %>>
+                                <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500 peer-checked:border-red-500 peer-checked:after:bg-white"></div>
+                            </label>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
+                                <div class="relative">
+                                    <select name="farewell_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all appearance-none">
+                                        <option value="">Aucun salon</option>
+                                        <% channels.filter(c => c.type === 0).forEach(ch => { %>
+                                            <option value="<%= ch.id %>" <%= settings.farewell?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                        <% }) %>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
+                                <textarea name="farewell_message" id="farewellMsg" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all resize-none" placeholder="{user} vient de nous quitter." oninput="updateWelcomePreview()"><%= settings.farewell?.message || '' %></textarea>
+                                <p class="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider font-bold">Variables : {user}, {server}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+                        Enregistrer les messages
+                    </button>
+                </form>
+
+                <!-- Preview Area -->
+                <div class="sticky top-24 h-fit space-y-6">
+                    <div class="glass-card rounded-2xl p-6 bg-zinc-900/30">
+                        <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            Aperçu Bienvenue
+                        </h3>
+                        <div class="bg-[#2b2d31] p-4 rounded-lg shadow-xl border border-black/20">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-zinc-700 shrink-0 overflow-hidden">
+                                    <img src="<%= bot.user.displayAvatarURL() %>" alt="" class="w-full h-full object-cover opacity-50 grayscale">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="text-white text-sm font-semibold hover:underline cursor-pointer tracking-tight"><%= bot.user.username %></span>
+                                        <span class="bg-indigo-500 text-white px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-tighter">Bot</span>
+                                        <span class="text-[#949ba4] text-[10px] font-medium">Aujourd'hui à 14:42</span>
+                                    </div>
+                                    <p id="welcomePreview" class="text-zinc-200 text-sm whitespace-pre-wrap break-words leading-relaxed"></p>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
-                            <textarea name="welcome_message" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all resize-none" placeholder="Bienvenue {user} sur {server} !"><%= settings.welcome?.message || '' %></textarea>
-                            <p class="text-xs text-zinc-500 mt-1">Variables : {user}, {server}, {memberCount}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Farewell -->
-                <div class="glass-card rounded-2xl p-6">
-                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
-                        <div>
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i data-lucide="user-minus" class="w-5 h-5 text-red-400"></i>
-                                Message de Départ
-                            </h2>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="farewell_enabled" class="sr-only peer" <%= settings.farewell?.enabled ? 'checked' : '' %>>
-                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500 peer-checked:border-red-500 peer-checked:after:bg-white"></div>
-                        </label>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
-                            <div class="relative">
-                                <select name="farewell_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all appearance-none">
-                                    <option value="">Aucun salon</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.farewell?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    <div class="glass-card rounded-2xl p-6 bg-zinc-900/30">
+                        <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            Aperçu Départ
+                        </h3>
+                        <div class="bg-[#2b2d31] p-4 rounded-lg shadow-xl border border-black/20">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-zinc-700 shrink-0 overflow-hidden">
+                                    <img src="<%= bot.user.displayAvatarURL() %>" alt="" class="w-full h-full object-cover opacity-50 grayscale">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-0.5">
+                                        <span class="text-white text-sm font-semibold hover:underline cursor-pointer tracking-tight"><%= bot.user.username %></span>
+                                        <span class="bg-indigo-500 text-white px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-tighter">Bot</span>
+                                        <span class="text-[#949ba4] text-[10px] font-medium">Aujourd'hui à 14:42</span>
+                                    </div>
+                                    <p id="farewellPreview" class="text-zinc-200 text-sm whitespace-pre-wrap break-words leading-relaxed"></p>
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
-                            <textarea name="farewell_message" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all resize-none" placeholder="{user} vient de nous quitter."><%= settings.farewell?.message || '' %></textarea>
-                            <p class="text-xs text-zinc-500 mt-1">Variables : {user}, {server}</p>
-                        </div>
                     </div>
                 </div>
+            </div>
 
-                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
-                    Enregistrer les messages
-                </button>
-            </form>
+            <script>
+                function updateWelcomePreview() {
+                    const wMsg = document.getElementById('welcomeMsg').value || 'Bienvenue {user} sur {server} !';
+                    const fMsg = document.getElementById('farewellMsg').value || '{user} vient de nous quitter.';
+
+                    const serverName = "<%= guild.name %>";
+                    const userName = "PseudoUtilisateur";
+
+                    const format = (text) => text
+                        .replace(/{user}/g, `**${userName}**`)
+                        .replace(/{server}/g, `**${serverName}**`)
+                        .replace(/{memberCount}/g, `**1,337**`);
+
+                    document.getElementById('welcomePreview').innerHTML = format(wMsg).replace(/\n/g, '<br>');
+                    document.getElementById('farewellPreview').innerHTML = format(fMsg).replace(/\n/g, '<br>');
+                }
+                updateWelcomePreview();
+            </script>
         <% } else if (tab === 'roles') { %>
             <form action="/guilds/<%= guild.id %>/settings/roles" method="POST" class="max-w-4xl space-y-8">
                 <div class="glass-card rounded-2xl p-6">
