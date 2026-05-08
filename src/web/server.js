@@ -179,10 +179,16 @@ class WebDashboard {
             if (channel && channel.isTextBased()) {
                const { EmbedBuilder } = require('discord.js');
                const embed = new EmbedBuilder()
-                 .setTitle(req.body.title || "Titre")
-                 .setDescription(req.body.description || "Description")
-                 .setColor(req.body.color || "#6366f1")
-                 .setAuthor({ name: this.bot.user.username, iconURL: this.bot.user.displayAvatarURL() });
+                 .setTitle(req.body.title || null)
+                 .setDescription(req.body.description || null)
+                 .setColor(req.body.color || "#6366f1");
+
+               if (req.body.authorName) embed.setAuthor({ name: req.body.authorName, iconURL: req.body.authorIcon || null });
+               if (req.body.thumbnail) embed.setThumbnail(req.body.thumbnail);
+               if (req.body.image) embed.setImage(req.body.image);
+               if (req.body.footerText) embed.setFooter({ text: req.body.footerText, iconURL: req.body.footerIcon || null });
+               if (req.body.timestamp === "on") embed.setTimestamp();
+
                await channel.send({ embeds: [embed] });
                return res.redirect(`/guilds/${guild.id}?success=1&tab=${section}`);
             }
@@ -273,7 +279,7 @@ class WebDashboard {
                 "Mute (Web)",
                 reason,
                 "Dashboard",
-                [{ name: "Duration", value: `${duration}m`, inline: true }],
+                [{ name: "Duration", value: `${duration || 10}m`, inline: true }],
               );
             }
 
@@ -287,6 +293,19 @@ class WebDashboard {
                       .catch(() => {});
                 },
                 parseInt(duration) * 60000,
+              );
+            }
+          } else if (action === "clear") {
+            const { amount, channelId } = req.body;
+            const channel = guild.channels.cache.get(channelId);
+            if (channel && channel.isTextBased()) {
+              await channel.bulkDelete(parseInt(amount) || 10).catch(() => {});
+              await db.logModAction(
+                guild,
+                "N/A",
+                "Clear (Web)",
+                `Deleted ${amount} messages in #${channel.name}`,
+                "Dashboard"
               );
             }
           }
