@@ -1,70 +1,42 @@
-# DSU-V4 | Multi-Function Discord Bot 🚀
+# DSU-V4 | Professional Multi-Function Discord Bot 🚀
 
-DSU-V4 is a versatile and modular Discord bot designed with [discord.js](https://discord.js.org/). It offers a complete solution for managing, entertaining, and securing your server.
+DSU-V4 is a premium, modular Discord solution designed for high-performance server management, advanced security, and community engagement. Built with a focus on elegance and efficiency, it provides administrators with a centralized control center to oversee every aspect of their Discord community.
 
-## ✨ Key Features
+## ✨ Showcase
 
-### 🛡️ Moderation & Security
-- **Sanction System**: Ban, Kick, Mute (timeout), and Warn with database tracking.
-- **Intelligent Automod**: Protection against spam, advertisement links, ghost pings, and forbidden words.
-- **Detailed Logs**: Complete event tracking (deleted/edited messages, joins/leaves, moderation actions).
-- **Role Management**: Reaction-role system for seamless self-assignment.
+### 🛡️ Elite Moderation & Security
+- **Advanced Sanctioning**: Comprehensive database-tracked system for Bans, Kicks, Warns, and Timeouts.
+- **Intelligent Automod**: Proactive protection against spam, unauthorized links, ghost pings, and toxic language.
+- **Real-time Surveillance**: Granular logging of over 14 different event categories to maintain total oversight.
+- **Dynamic Shields**: Instant "Strike" mode to lockdown servers during raids or mass-spam attacks.
 
-### 💰 Economy & Social
-- **Virtual Economy**: Earn currency via `/daily` and `/work`. Play Rock-Paper-Scissors (`/rps`).
-- **Leaderboard**: View the wealthiest users on the server.
-- **Marriage System**: A complete module to get married, manage couple profiles, and social interactions.
-- **Fun Commands**: Animal images (`/cat`, `/dog`), Reddit memes (`/meme`), and more.
+### 📊 Premium Web Control Center
+- **Manus AI Visual Style**: A stunning, OLED-ready dashboard featuring glassmorphism and intuitive bento grids.
+- **Centralized Management**: Configure everything—from welcome messages to complex automod rules—without ever typing a command.
+- **Real-time Previews**: Native visual builders for Embeds and automated messages with live Discord rendering.
 
-### 🎫 Support & Utilities
-- **Ticket System**: Integrated customer support with private channels and role-based management.
-- **Welcome Messages**: Personalized welcome for new members.
-- **Embed Builder**: Create professional announcements via a visual modal interface.
-- **External Integrations**: Search GitHub profiles and repositories directly from Discord.
+### 💰 Economy & Social Ecosystem
+- **Integrated Economy**: Robust currency system with daily rewards, work incentives, and competitive games.
+- **Global Leaderboards**: Recognize and reward your most active and wealthiest community members.
+- **Social Modules**: Complete marriage system and profile management to foster community bonds.
 
-### 📊 Web Dashboard
-- An intuitive web interface to configure the bot without using text commands.
-- Real-time management of settings for each guild.
-- **Style**: Modern "Manus AI" design with dark mode, glassmorphism, and bento grids.
+### 🎫 Support & Utility Suite
+- **Advanced Ticket System**: Secure, private customer support channels with dedicated staff roles and automated organization.
+- **Automated Workflows**: Seamless auto-role assignment and personalized onboarding journeys for new members.
+- **Visual Storytelling**: Visual Embed Builder for professional announcements and server news.
 
 ---
 
-## 🚀 Installation & Setup
+## 🏗️ Technical Foundation
 
-### Prerequisites
-- **Node.js** v18.0.0 or higher.
-- **MongoDB** (Local or Atlas).
-- A Discord bot token.
+The project leverages a sophisticated service-oriented architecture, ensuring high availability and rapid response times across all modules.
 
-### Configuration
-1. Clone the repository.
-2. Install dependencies: `npm install`.
-3. Copy `.env.example` to `.env` and fill in the variables:
-   ```env
-   TOKEN=your_token
-   MONGO_URI=your_mongodb_uri
-   CLIENT_ID=bot_id
-   ...
-   ```
-
-### Running
-- **Deploy Slash Commands**: `npm run deploy:commands`
-- **Start**: `npm start`
-- **Development Mode**: `npm run dev`
-- **UI Test Mode**: `./dsu.sh mockui`
-
----
-
-## 🛠️ Architecture
-
-The project uses a service-oriented approach to decouple business logic from the Discord interface:
-
-- **Core (`src/client.js`)**: Bot orchestration.
-- **Modules (`src/modules/`)**: Business logic (Economy, Moderation, Tickets).
-- **Dashboard (`src/web/`)**: Express server and EJS templates for the web interface.
+- **Core Engine**: Built on the latest discord.js framework.
+- **Data Integrity**: Powered by a high-performance MongoDB cluster.
+- **Interface**: Modern Express server with EJS templating and Tailwind CSS.
 
 ---
 
 ## 📜 License
 
-This project is distributed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+This project is a private specialized instance distributed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
