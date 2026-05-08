@@ -81,12 +81,17 @@ Thumbs.db
 .sdk/
 src/wap.js
 
+# Development tools & Mocks
+test-ui.js
+dsu.sh
+
 # Claude Architecture
-# archi.md (Retiré du gitignore pour suivi doc)
 archi.md
 CLAUDE.md
 GEMINI.md
 plan.md
+DASHBOARD_SPECS.md
+MIGRATION_PLAN.md
 AI_*.md
 
 # Sensitive data
