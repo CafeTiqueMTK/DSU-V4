@@ -1,10 +1,10 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder,
   ChannelType,
 } = require("discord.js");
 const db = require("../db.js");
+const { createBaseEmbed, success, error, Emojis, Colors } = require("../utils/embeds.js");
 
 module.exports = [
   // --- MAIN MOD COMMAND (ban, kick, warn, mute) ---
@@ -75,7 +75,6 @@ module.exports = [
       .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     async execute(interaction) {
       const guildId = interaction.guild.id;
-      const settings = await db.getSettings(guildId);
       const sub = interaction.options.getSubcommand();
       const user = interaction.options.getUser("user");
       const reason =
@@ -86,7 +85,7 @@ module.exports = [
 
       if (!member && sub !== "ban") {
         return interaction.reply({
-          content: "User not found on this server.",
+          embeds: [error(interaction.user, "User not found on this server.", "Error", "🔨 Moderation System")],
           flags: 64,
         });
       }
@@ -96,13 +95,13 @@ module.exports = [
           !interaction.member.permissions.has(PermissionFlagsBits.BanMembers)
         ) {
           return interaction.reply({
-            content: "You lack Ban permissions.",
+            embeds: [error(interaction.user, "You lack Ban permissions.", "Error", "🔨 Moderation System")],
             flags: 64,
           });
         }
         await interaction.guild.members.ban(user, { reason }).catch(() => {});
         await interaction.reply({
-          content: `✅ **${user.tag}** has been banned.`,
+          embeds: [success(interaction.user, `**${user.tag}** has been banned.`, "Ban Applied", "🔨 Moderation System")],
           flags: 64,
         });
         await db.logModAction(
@@ -115,7 +114,7 @@ module.exports = [
       } else if (sub === "kick") {
         await member.kick(reason).catch(() => {});
         await interaction.reply({
-          content: `✅ **${user.tag}** has been kicked.`,
+          embeds: [success(interaction.user, `**${user.tag}** has been kicked.`, "Kick Applied", "🔨 Moderation System")],
           flags: 64,
         });
         await db.logModAction(
@@ -129,7 +128,7 @@ module.exports = [
         await db.addWarn(guildId, user.id, interaction.user.id, reason);
         const warns = await db.getWarns(guildId, user.id);
         await interaction.reply({
-          content: `✅ **${user.tag}** warned. Total: ${warns.length}`,
+          embeds: [success(interaction.user, `**${user.tag}** has been warned.\nTotal warnings: **${warns.length}**`, "Warn Applied", "🔨 Moderation System")],
           flags: 64,
         });
         await db.logModAction(
@@ -147,12 +146,12 @@ module.exports = [
         );
         if (!muteRole)
           return interaction.reply({
-            content: 'No "mute" role found.',
+            embeds: [error(interaction.user, 'No "mute" role found. Please create one named "mute".', "Error", "🔨 Moderation System")],
             flags: 64,
           });
         await member.roles.add(muteRole, reason).catch(() => {});
         await interaction.reply({
-          content: `✅ **${user.tag}** muted for ${duration}m.`,
+          embeds: [success(interaction.user, `**${user.tag}** has been muted for **${duration}m**.`, "Mute Applied", "🔨 Moderation System")],
           flags: 64,
         });
         await db.logModAction(
@@ -186,7 +185,7 @@ module.exports = [
     async execute(interaction) {
       if (!interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
         return interaction.reply({
-          content: "You lack Ban permissions.",
+          embeds: [error(interaction.user, "You lack Ban permissions.", "Error", "🔨 Moderation System")],
           flags: 64,
         });
       }
@@ -195,7 +194,7 @@ module.exports = [
         interaction.options.getString("reason") || "No reason provided";
       try {
         await interaction.guild.members.unban(userId, reason);
-        await interaction.reply({ content: `✅ User \`${userId}\` unbanned.` });
+        await interaction.reply({ embeds: [success(interaction.user, `User \`${userId}\` has been unbanned.`, "Unban Successful", "🔨 Moderation System")] });
         await db.logModAction(
           interaction.guild,
           userId,
@@ -205,7 +204,7 @@ module.exports = [
         );
       } catch {
         await interaction.reply({
-          content: "❌ Error unbanning user.",
+          embeds: [error(interaction.user, "Error unbanning user. Check if the ID is correct.", "Error", "🔨 Moderation System")],
           flags: 64,
         });
       }
@@ -223,20 +222,20 @@ module.exports = [
     async execute(interaction) {
       const member = interaction.options.getMember("user");
       if (!member)
-        return interaction.reply({ content: "User not found.", flags: 64 });
+        return interaction.reply({ embeds: [error(interaction.user, "User not found.", "Error", "🔨 Moderation System")], flags: 64 });
       const muteRole = interaction.guild.roles.cache.find(
         (r) => r.name.toLowerCase() === "mute",
       );
       if (!muteRole)
         return interaction.reply({
-          content: 'No "mute" role found.',
+          embeds: [error(interaction.user, 'No "mute" role found.', "Error", "🔨 Moderation System")],
           flags: 64,
         });
       await member.roles
         .remove(muteRole, `Unmuted by ${interaction.user.tag}`)
         .catch(() => {});
       await interaction.reply({
-        content: `🔊 <@${member.id}> has been unmuted.`,
+        embeds: [success(interaction.user, `<@${member.id}> has been unmuted.`, "Unmute Successful", "🔨 Moderation System")],
       });
     },
   },
@@ -253,6 +252,7 @@ module.exports = [
           .addChannelOption((opt) =>
             opt
               .setName("channel")
+              .setDescription("The channel to purge")
               .addChannelTypes(ChannelType.GuildText)
               .setRequired(true),
           ),
@@ -264,6 +264,7 @@ module.exports = [
           .addChannelOption((opt) =>
             opt
               .setName("channel")
+              .setDescription("The channel to purge bot messages from")
               .addChannelTypes(ChannelType.GuildText)
               .setRequired(true),
           ),
@@ -282,10 +283,10 @@ module.exports = [
         });
         await channel.bulkDelete(toDelete, true);
         await interaction.editReply({
-          content: `✅ Purged ${toDelete.size} messages.`,
+          embeds: [success(interaction.user, `Successfully purged **${toDelete.size}** messages.`, "Purge Successful", "🔨 Moderation System")],
         });
       } catch (e) {
-        await interaction.editReply({ content: `❌ Error: ${e.message}` });
+        await interaction.editReply({ embeds: [error(interaction.user, e.message, "Error", "🔨 Moderation System")] });
       }
     },
   },
@@ -295,9 +296,19 @@ module.exports = [
     data: new SlashCommandBuilder()
       .setName("clearmsg")
       .setDescription("Delete the last messages from a user")
-      .addUserOption((opt) => opt.setName("user").setRequired(true))
+      .addUserOption((opt) =>
+        opt
+          .setName("user")
+          .setDescription("The user whose messages to delete")
+          .setRequired(true),
+      )
       .addIntegerOption((opt) =>
-        opt.setName("count").setMinValue(1).setMaxValue(100).setRequired(true),
+        opt
+          .setName("count")
+          .setDescription("Number of messages to delete")
+          .setMinValue(1)
+          .setMaxValue(100)
+          .setRequired(true),
       )
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
     async execute(interaction) {
@@ -309,7 +320,7 @@ module.exports = [
         .first(count);
       await interaction.channel.bulkDelete(toDelete, true);
       await interaction.reply({
-        content: `🧹 Deleted ${toDelete.length} messages from ${user.tag}.`,
+        embeds: [success(interaction.user, `Deleted **${toDelete.length}** messages from **${user.tag}**.`, "Clear Messages", "🔨 Moderation System")],
         flags: 64,
       });
     },
@@ -320,8 +331,18 @@ module.exports = [
     data: new SlashCommandBuilder()
       .setName("dm")
       .setDescription("Send a private message to a user.")
-      .addUserOption((opt) => opt.setName("user").setRequired(true))
-      .addStringOption((opt) => opt.setName("message").setRequired(true))
+      .addUserOption((opt) =>
+        opt
+          .setName("user")
+          .setDescription("The user to DM")
+          .setRequired(true),
+      )
+      .addStringOption((opt) =>
+        opt
+          .setName("message")
+          .setDescription("The message to send")
+          .setRequired(true),
+      )
       .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction) {
       const user = interaction.options.getUser("user");
@@ -329,12 +350,12 @@ module.exports = [
       try {
         await user.send(message);
         await interaction.reply({
-          content: `📩 Message sent to ${user.tag}.`,
+          embeds: [success(interaction.user, `Message sent to **${user.tag}**.`, "DM Sent", "🔨 Moderation System")],
           flags: 64,
         });
       } catch {
         await interaction.reply({
-          content: `❌ Unable to DM ${user.tag}.`,
+          embeds: [error(interaction.user, `Unable to DM **${user.tag}**. They might have DMs disabled.`, "Error", "🔨 Moderation System")],
           flags: 64,
         });
       }
@@ -346,17 +367,22 @@ module.exports = [
     data: new SlashCommandBuilder()
       .setName("clearwarn")
       .setDescription("Delete all warnings for a user")
-      .addUserOption((opt) => opt.setName("user").setRequired(true))
+      .addUserOption((opt) =>
+        opt
+          .setName("user")
+          .setDescription("The user whose warnings to clear")
+          .setRequired(true),
+      )
       .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
     async execute(interaction) {
       const user = interaction.options.getUser("user");
       const guildId = interaction.guild.id;
       const warns = await db.getWarns(guildId, user.id);
       if (warns.length === 0)
-        return interaction.reply({ content: "No warnings found.", flags: 64 });
+        return interaction.reply({ embeds: [error(interaction.user, "No warnings found for this user.", "Error", "🔨 Moderation System")], flags: 64 });
       await db.clearWarns(guildId, user.id);
       await interaction.reply({
-        content: `🧹 Warnings cleared for **${user.tag}**.`,
+        embeds: [success(interaction.user, `Warnings cleared for **${user.tag}**.`, "Warnings Cleared", "🔨 Moderation System")],
         flags: 64,
       });
     },

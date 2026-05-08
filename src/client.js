@@ -18,27 +18,40 @@ class Bot extends Client {
     super({
       intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.DirectMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildPresences,
       ],
     });
 
     this.commands = new Collection();
     this.updateChecker = new UpdateChecker(this);
     this.dashboard = new WebDashboard(this);
+
+    // Load banwords
+    try {
+      const banwordPath = path.join(process.cwd(), "banword.json");
+      if (fs.existsSync(banwordPath)) {
+        this.banwords = JSON.parse(fs.readFileSync(banwordPath, "utf-8"));
+      } else {
+        this.banwords = [];
+      }
+    } catch (err) {
+      console.error("Failed to load banword.json:", err);
+      this.banwords = [];
+    }
   }
 
   async start() {
-    console.log("🚀 Initializing DSU V4...");
+    console.log("Initializing DSU V4...");
 
     // 1. Initialize Database
     try {
       await db.init();
-      console.log("✅ Database initialized.");
+      console.log("Database initialized.");
     } catch (err) {
-      console.error("❌ Database failed to initialize:", err);
+      console.error("Database failed to initialize:", err);
     }
 
     // 2. Load commands and events
@@ -52,12 +65,16 @@ class Bot extends Client {
 
     // 4. Setup Ready Event
     this.once("ready", () => {
-      console.log(`🚀 Logged in as ${this.user.tag}`);
+      console.log(`Logged in as ${this.user.tag}`);
       this.updateChecker.start();
     });
 
     // 5. Start Web Dashboard
-    this.dashboard.start();
+    if (process.env.DISABLE_WEB !== "true") {
+      this.dashboard.start();
+    } else {
+      console.log("Web Dashboard is disabled via flag.");
+    }
 
     // 6. Handle Shutdown
     this.setupGracefulShutdown();
@@ -66,7 +83,7 @@ class Bot extends Client {
     try {
       await this.login(config.token);
     } catch (err) {
-      console.error("❌ Failed to login to Discord:", err);
+      console.error("Failed to login to Discord:", err);
       process.exit(1);
     }
   }
@@ -75,13 +92,13 @@ class Bot extends Client {
     const commandsPath = path.join(__dirname, "commands");
     const { commandsArray } = loadCommands(this, commandsPath);
     this.commandsArray = commandsArray;
-    console.log(`✅ Loaded ${this.commands.size} commands.`);
+    console.log(`Loaded ${this.commands.size} commands.`);
   }
 
   loadEvents() {
     const eventsPath = path.join(__dirname, "events");
     if (!fs.existsSync(eventsPath)) {
-      console.warn("⚠️ Events directory not found.");
+      console.warn("Events directory not found.");
       return;
     }
     const eventFiles = fs
@@ -98,25 +115,25 @@ class Bot extends Client {
         console.warn(`[WARN] Failed to load event ${file}: ${err.message}`);
       }
     }
-    console.log(`✅ Loaded ${eventFiles.length} events.`);
+    console.log(`Loaded ${eventFiles.length} events.`);
   }
 
   async deployCommands() {
     const rest = new REST({ version: "10" }).setToken(config.token);
     try {
-      console.log("🔄 Deploying slash commands...");
+      console.log("Deploying slash commands...");
       await rest.put(Routes.applicationCommands(config.clientId), {
         body: this.commandsArray,
       });
-      console.log("✅ Commands deployed.");
+      console.log("Commands deployed.");
     } catch (error) {
-      console.error("❌ Deployment error:", error);
+      console.error("Deployment error:", error);
     }
   }
 
   setupGracefulShutdown() {
     const shutdown = async (signal) => {
-      console.log(`\n🛑 Received ${signal}, shutting down...`);
+      console.log(`\nReceived ${signal}, shutting down...`);
       this.updateChecker.stop();
       await db.shutdown();
       this.destroy();
@@ -127,11 +144,11 @@ class Bot extends Client {
     process.on("SIGTERM", () => shutdown("SIGTERM"));
 
     process.on("uncaughtException", (err) => {
-      console.error("❌ Uncaught Exception:", err);
+      console.error("Uncaught Exception:", err);
     });
 
     process.on("unhandledRejection", (reason) => {
-      console.error("❌ Unhandled Rejection:", reason);
+      console.error("Unhandled Rejection:", reason);
     });
   }
 }

@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
+const { Colors, Emojis, createBaseEmbed } = require("../utils/embeds");
 
 module.exports = {
   name: Events.GuildMemberRemove,
@@ -15,29 +16,28 @@ module.exports = {
       if (farewellConf?.enabled && farewellConf.channel) {
         const channel = guild.channels.cache.get(farewellConf.channel);
         if (channel) {
-          const embed = new EmbedBuilder()
-            .setTitle(`😢 ${member.user.username} left the server`)
-            .setDescription(`We hope to see you again on **${guild.name}**...`)
-            .setImage(member.user.displayAvatarURL({ dynamic: true }))
-            .setColor(0xff5555)
-            .setFooter({ text: `User ID: ${member.id}` })
-            .setTimestamp(new Date());
-          await channel.send({ embeds: [embed] });
+          const embed = createBaseEmbed(member.user, {
+            title: `😢 ${member.user.username} left the server`,
+            description: `We're sad to see you go! We hope to see you again on **${guild.name}**!`,
+            thumbnail: member.user.displayAvatarURL({ dynamic: true, size: 256 }),
+            color: Colors.ERROR,
+          });
+          await channel.send({ content: `Goodbye ${member.user.tag}...`, embeds: [embed] });
         }
       }
 
-      // Farewell log
       const logChannel = await getLogChannel(guild, "farewell");
       if (logChannel) {
-        const embed = new EmbedBuilder()
-          .setTitle(`🗑️ Log: Member Left`)
-          .setDescription(
-            `A user has left the server:\n• Tag: **${member.user.tag}**\n• ID: ${member.id}\n• Account created: <t:${Math.floor(member.user.createdTimestamp / 1000)}:F>`,
-          )
-          .setImage(member.user.displayAvatarURL({ dynamic: true }))
-          .setColor(0xff5555)
-          .setFooter({ text: `Left ${guild.name}` })
-          .setTimestamp(new Date());
+        const embed = createBaseEmbed(member.user, {
+          title: `${Emojis.ERROR} Member Left`,
+          description: `**${member.user.tag}** (\`${member.id}\`) has left the server.`,
+          thumbnail: member.user.displayAvatarURL({ dynamic: true }),
+          color: Colors.ERROR,
+        })
+        .addFields(
+          { name: "📅 Account Created", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+          { name: "📥 Final Count", value: guild.memberCount.toString(), inline: true }
+        );
         await logChannel.send({ embeds: [embed] });
       }
     } catch (error) {

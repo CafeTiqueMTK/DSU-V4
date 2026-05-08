@@ -95,8 +95,8 @@ class WebDashboard {
 
       // Fetch data for selects
       const channels = guild.channels.cache
-        .filter((c) => c.type === 0) // GuildText
-        .map((c) => ({ id: c.id, name: c.name }));
+        .filter((c) => c.type === 0 || c.type === 4) // GuildText (0) or Category (4)
+        .map((c) => ({ id: c.id, name: c.name, type: c.type }));
 
       const roles = guild.roles.cache
         .filter((r) => r.name !== "@everyone")
@@ -131,12 +131,8 @@ class WebDashboard {
           let updates = {};
           if (section === "general") {
             updates = {
-              "welcome.enabled": req.body.welcome_enabled === "on",
-              "welcome.channel": req.body.welcome_channel || null,
-              "farewell.enabled": req.body.farewell_enabled === "on",
-              "farewell.channel": req.body.farewell_channel || null,
-              "autorole.enabled": req.body.autorole_enabled === "on",
-              "autorole.roleId": req.body.autorole_roleId || null,
+              "prefix": req.body.prefix || "!",
+              "language": req.body.language || "fr",
             };
           } else if (section === "automod") {
             updates = {
@@ -148,9 +144,27 @@ class WebDashboard {
               "antiRaid.enabled": req.body.antiRaid === "on",
               "antiMassMention.enabled": req.body.antiMassMention === "on",
             };
+          } else if (section === "welcome") {
+            updates = {
+              "welcome.enabled": req.body.welcome_enabled === "on",
+              "welcome.channel": req.body.welcome_channel || null,
+              "welcome.message": req.body.welcome_message || "",
+              "farewell.enabled": req.body.farewell_enabled === "on",
+              "farewell.channel": req.body.farewell_channel || null,
+              "farewell.message": req.body.farewell_message || "",
+            };
+          } else if (section === "roles") {
+            updates = {
+              "autorole.enabled": req.body.autorole_enabled === "on",
+              "autorole.roleId": req.body.autorole_roleId || null,
+              "tickets.enabled": req.body.tickets_enabled === "on",
+              "tickets.supportRoleId": req.body.tickets_roleId || null,
+              "tickets.ticketsCategory": req.body.tickets_categoryId || null,
+              "tickets.welcomeMessage": req.body.tickets_welcomeMessage || "Welcome to your ticket! A support member will assist you soon.",
+              "tickets.ticketPrefix": req.body.tickets_ticketPrefix || "ticket",
+            };
           } else if (section === "logs") {
             const categories = {};
-            // List all possible log categories from db.js
             const defaultCats = db.getDefaultSettings().logs.categories;
             for (const cat of Object.keys(defaultCats)) {
               categories[cat] = req.body[`log_${cat}`] === "on";
@@ -160,6 +174,21 @@ class WebDashboard {
               "logs.channel": req.body.logs_channel || null,
               "logs.categories": categories,
             };
+          } else if (section === "embeds") {
+            const channel = guild.channels.cache.get(req.body.channel);
+            if (channel && channel.isTextBased()) {
+               const { EmbedBuilder } = require('discord.js');
+               const embed = new EmbedBuilder()
+                 .setTitle(req.body.title || "Titre")
+                 .setDescription(req.body.description || "Description")
+                 .setColor(req.body.color || "#6366f1")
+                 .setAuthor({ name: this.bot.user.username, iconURL: this.bot.user.displayAvatarURL() });
+               await channel.send({ embeds: [embed] });
+               return res.redirect(`/guilds/${guild.id}?success=1&tab=${section}`);
+            }
+          } else if (section === "moderation") {
+            // Forward to the actual moderation route logic
+            return res.redirect(307, `/guilds/${guild.id}/mod/${req.body.action}`);
           }
 
           await db.updateSettings(guild.id, updates);
@@ -275,11 +304,11 @@ class WebDashboard {
   start() {
     if (!config.dashboardUser || !config.dashboardPassword) {
       console.warn(
-        "⚠️ Web Dashboard: DASHBOARD_USER or DASHBOARD_PASSWORD not set. Login will be disabled.",
+        "Web Dashboard: DASHBOARD_USER or DASHBOARD_PASSWORD not set. Login will be disabled.",
       );
     }
     this.app.listen(this.port, () => {
-      console.log(`🌐 Web Dashboard running on http://localhost:${this.port}`);
+      console.log(`Web Dashboard running on http://localhost:${this.port}`);
     });
   }
 }

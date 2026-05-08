@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
+const { createLogEmbed, Colors } = require("../utils/embeds");
 
 module.exports = {
   name: Events.MessageCreate,
@@ -41,7 +42,7 @@ module.exports = {
             : message.channel;
           if (levelChannel) {
             await levelChannel.send(
-              `🎉 Félicitations <@${userId}> ! Tu viens de passer au niveau **${newLevel}** !`,
+              `🎉 Congratulations <@${userId}>! You just leveled up to **${newLevel}**!`,
             );
           }
         }
@@ -52,30 +53,36 @@ module.exports = {
 
     // --- 2. Automod ---
     if (guildSettings.automod?.enabled) {
-      const sendAutomodWarning = async (reason, violationType) => {
+      if (guildSettings.automod.safeChannels?.includes(message.channel.id)) {
+        // Continue to funny responses but skip automod checks
+      } else {
+        const sendAutomodWarning = async (reason, violationType) => {
         if (!client.automodCooldown) client.automodCooldown = new Map();
         const cooldownKey = `${guildId}:${userId}:${violationType}`;
         const now = Date.now();
         if (now - (client.automodCooldown.get(cooldownKey) || 0) < 10000)
           return;
         client.automodCooldown.set(cooldownKey, now);
+        setTimeout(() => client.automodCooldown.delete(cooldownKey), 10000);
 
         try {
-          const dmEmbed = new EmbedBuilder()
-            .setTitle("⚠️ Warning - Violation Detected")
-            .setDescription(
-              `Hello ${message.author.username},\n\nYour message has been flagged: **${violationType}**\nReason: ${reason}`,
-            )
-            .setColor(0xffa500)
-            .setTimestamp();
+          const dmEmbed = createLogEmbed(
+            "⚠️ Warning - Violation Detected",
+            `Hello ${message.author.username},\n\nYour message has been flagged: **${violationType}**\nReason: ${reason}`,
+            Colors.WARNING,
+            [],
+            "🚨 Automod System"
+          );
           await message.author.send({ embeds: [dmEmbed] }).catch(() => {});
         } catch (e) {}
 
         const logChannel = await getLogChannel(message.guild, "automod");
         if (logChannel) {
-          const logEmbed = new EmbedBuilder()
-            .setTitle("🚨 Automod Action")
-            .addFields(
+          const logEmbed = createLogEmbed(
+            "🚨 Automod Action",
+            null,
+            Colors.AUTOMOD,
+            [
               {
                 name: "Member",
                 value: `${message.author.tag} (<@${userId}>)`,
@@ -87,9 +94,9 @@ module.exports = {
                 value: `<#${message.channel.id}>`,
                 inline: true,
               },
-            )
-            .setColor(0xff0000)
-            .setTimestamp();
+            ],
+            "🚨 Automod System"
+          );
           await logChannel.send({ embeds: [logEmbed] });
         }
       };
@@ -106,10 +113,14 @@ module.exports = {
       if (guildSettings.antiSpam?.enabled) {
         if (!client.spamMap) client.spamMap = new Map();
         const spamKey = `${guildId}:${userId}`;
-        const times = client.spamMap.get(spamKey) || [];
+        const times = client.spamMap.get(spamKey);
+        if (!times) {
+          setTimeout(() => client.spamMap.delete(spamKey), 5000);
+        }
+        const timesArr = times || [];
         const now = Date.now();
-        times.push(now);
-        const recent = times.filter((t) => now - t < 5000);
+        timesArr.push(now);
+        const recent = timesArr.filter((t) => now - t < 5000);
         client.spamMap.set(spamKey, recent);
         if (recent.length > 5) {
           await message.delete().catch(() => {});
@@ -117,10 +128,10 @@ module.exports = {
         }
       }
 
-      // Anti Invites/Links
+      // Anti Invites
       if (
         guildSettings.antiInvites?.enabled &&
-        /discord\.gg\/[a-zA-Z0-9]+/.test(message.content)
+        /(discord\.gg|discord\.com\/invite)\/[a-zA-Z0-9]+/.test(message.content)
       ) {
         await message.delete().catch(() => {});
         return sendAutomodWarning(
@@ -128,6 +139,8 @@ module.exports = {
           "Invite Link",
         );
       }
+
+      // Anti Links
       if (
         guildSettings.antiLinks?.enabled &&
         /https?:\/\/[^\s]+/.test(message.content)
@@ -137,6 +150,21 @@ module.exports = {
           "External links are not allowed",
           "External Link",
         );
+      }
+
+      // Anti Role Mention
+      if (guildSettings.antiRoles?.enabled) {
+        const blockedRoles = guildSettings.automod?.blockedRoles || [];
+        const mentionedBlocked = message.mentions.roles.filter((r) =>
+          blockedRoles.includes(r.id),
+        );
+        if (mentionedBlocked.size > 0) {
+          await message.delete().catch(() => {});
+          return sendAutomodWarning(
+            "Mentioning protected roles is not allowed",
+            "Protected Role Mention",
+          );
+        }
       }
 
       // Anti Keywords
@@ -156,7 +184,38 @@ module.exports = {
           );
         }
       }
+
+      // Anti NSFW (EN/FR)
+      if (guildSettings.antiNsfw?.enabled) {
+        const nsfwWords = client.banwords || [];
+        const lowerContent = message.content.toLowerCase();
+        const foundNsfw = nsfwWords.find(word => {
+          const regex = new RegExp(`\\b${word}\\b`, 'i');
+          return regex.test(lowerContent);
+        });
+
+        if (foundNsfw) {
+          await message.delete().catch(() => {});
+          return sendAutomodWarning(
+            `NSFW content detected: ${foundNsfw}`,
+            "NSFW Filter"
+          );
+        }
+      }
+
+      // Anti Invisible Characters / Zalgo
+      if (guildSettings.categories?.invisibleChars?.enabled) {
+        const invisibleCharsRegex = /[\u200B-\u200D\uFEFF\u202A-\u202E\u00AD\u2060-\u206F\u17B4\u17B5\u115F\u1160\u3164\uFFA0\u180E\u0300-\u036F\u0483-\u0489\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/;
+        if (invisibleCharsRegex.test(message.content)) {
+          await message.delete().catch(() => {});
+          return sendAutomodWarning(
+            "Message contains invisible or forbidden characters",
+            "Invisible Characters / Zalgo",
+          );
+        }
+      }
     }
+  }
 
     // --- 3. Funny Responses ---
     const funny = guildSettings.funny;
@@ -172,6 +231,7 @@ module.exports = {
           const now = Date.now();
           if (now - (client.funnyCooldown.get(key) || 0) < 30000) return;
           client.funnyCooldown.set(key, now);
+          setTimeout(() => client.funnyCooldown.delete(key), 30000);
           await message.reply(`${emoji} **${response}**`);
           return true;
         }
@@ -205,29 +265,6 @@ module.exports = {
         ));
 
       if (resp) return; // Stop if a funny response was sent
-    }
-
-    // --- 4. Anti Role Mention ---
-    if (guildSettings.antiRoles?.enabled) {
-      const blockedRoles = guildSettings.automod?.blockedRoles || [];
-      const mentionedBlocked = message.mentions.roles.filter((r) =>
-        blockedRoles.includes(r.id),
-      );
-      if (mentionedBlocked.size > 0) {
-        await message.delete().catch(() => {});
-        const logChannel = await getLogChannel(message.guild, "automod");
-        if (logChannel) {
-          await logChannel.send({
-            embeds: [
-              new EmbedBuilder()
-                .setTitle("🚫 Role Mention Blocked")
-                .setDescription(`User <@${userId}> mentioned a protected role.`)
-                .setColor(0xff0000)
-                .setTimestamp(),
-            ],
-          });
-        }
-      }
     }
   },
 };

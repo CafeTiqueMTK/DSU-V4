@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
+const { Colors, Emojis, createBaseEmbed } = require("../utils/embeds");
 
 module.exports = {
   name: Events.GuildMemberAdd,
@@ -20,41 +21,84 @@ module.exports = {
       const channel = guild.channels.cache.get(settings.welcome.channel);
       if (channel) {
         const embed = new EmbedBuilder()
-          .setTitle(`👋 Welcome ${member.user.username}!`)
-          .setDescription(`Welcome to **${guild.name}**! 🎉`)
-          .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-          .setColor(0x00ff99)
+          .setTitle(`👋 Welcome to the family, ${member.user.username}!`)
+          .setDescription(`We're glad to have you here at **${guild.name}**! 🎉\nYou are our **${guild.memberCount}th** member!`)
+          .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+          .setColor(Colors.SUCCESS)
           .setTimestamp();
-        await channel.send({ embeds: [embed] }).catch(() => {});
+        await channel.send({ content: `Hey ${member}! Welcome!`, embeds: [embed] }).catch(() => {});
       }
     }
 
     const logChannel = await getLogChannel(guild, "arrived");
     if (logChannel) {
-      const embed = new EmbedBuilder()
-        .setTitle(`📝 Member Joined`)
-        .setDescription(`**${member.user.tag}** joined.\nID: ${member.id}`)
-        .setColor(0x0099ff)
-        .setTimestamp();
+      const embed = createBaseEmbed(member.user, {
+        title: `${Emojis.USER} Member Joined`,
+        description: `**${member.user.tag}** (\`${member.id}\`) has joined the server.`,
+        color: Colors.SUCCESS,
+      })
+      .addFields(
+        { name: "📅 Account Created", value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
+        { name: "📥 Member Count", value: guild.memberCount.toString(), inline: true }
+      );
       await logChannel.send({ embeds: [embed] }).catch(() => {});
     }
 
-    // --- 3. Anti-Raid ---
+    // --- 3. Anti-Raid & Lockdown ---
     if (settings.antiRaid?.enabled) {
       if (!this.recentJoins) this.recentJoins = new Map();
-      const joins = this.recentJoins.get(guildId) || [];
+      if (!this.recentMembers) this.recentMembers = new Map();
+      
+      const guildJoins = this.recentJoins.get(guildId) || [];
+      const guildMembers = this.recentMembers.get(guildId) || [];
       const now = Date.now();
-      joins.push(now);
-      const recent = joins.filter((t) => now - t < 10000);
-      this.recentJoins.set(guildId, recent);
+      
+      guildJoins.push(now);
+      guildMembers.push(member);
+      
+      // Keep only joins from the last 10 seconds
+      const recentJoins = guildJoins.filter((t) => now - t < 10000);
+      const recentMembers = guildMembers.filter((m) => {
+          try { return (now - m.joinedTimestamp) < 10000; } catch { return false; }
+      });
+      
+      this.recentJoins.set(guildId, recentJoins);
+      this.recentMembers.set(guildId, recentMembers);
 
-      if (recent.length >= (settings.antiRaid.threshold || 5)) {
+      // If already in active lockdown, kick immediately
+      if (settings.antiRaid.active) {
+        await member.kick("Server Lockdown Active").catch(() => {});
+        return;
+      }
+
+      // If raid threshold reached
+      if (recentJoins.length >= (settings.antiRaid.threshold || 5)) {
         const amLog = await getLogChannel(guild, "automod");
-        if (amLog)
-          await amLog.send(
-            "🚨 **RAID DETECTED!** Anti-raid protection active.",
-          );
-        await member.kick("Anti-raid protection").catch(() => {});
+        
+        // 1. Activate Lockdown status
+        await db.updateSettings(guildId, { "antiRaid.active": true });
+
+        // 2. Clear out all users/bots who participated in the raid window
+        for (const m of recentMembers) {
+            await m.kick("Raid Participation / Mass Join").catch(() => {});
+        }
+        // Clear local cache for this guild to prevent double processing
+        this.recentJoins.set(guildId, []);
+        this.recentMembers.set(guildId, []);
+
+        // 3. Lock the server channels if configured
+        if (settings.antiRaid.lockdown) {
+          const everyone = guild.roles.everyone;
+          guild.channels.cache.forEach(async (channel) => {
+            if (channel.isTextBased() && channel.permissionsFor(everyone).has("SendMessages")) {
+              await channel.permissionOverwrites.edit(everyone, { SendMessages: false }, { reason: "Automatic Raid Lockdown" }).catch(() => {});
+            }
+          });
+        }
+
+        if (amLog) {
+            await amLog.send(`🚨 **RAID DETECTED!** (${recentJoins.length} joins in 10s)\n🧹 **Action:** Kicked all recent participants.\n🔒 **Status:** Server is now in **LOCKDOWN** mode.`);
+        }
       }
     }
 

@@ -206,7 +206,7 @@ module.exports = {
           await db.updateSettings(guildId, { moderatorRole: role.id });
           return interaction.reply({
             content: `✅ Moderator role set to <@&${role.id}>.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "set-mute-role") {
@@ -214,7 +214,7 @@ module.exports = {
           await db.updateSettings(guildId, { "automod.muteRoleId": role.id });
           return interaction.reply({
             content: `✅ Mute role set to <@&${role.id}>.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
       }
@@ -229,7 +229,7 @@ module.exports = {
           });
           return interaction.reply({
             content: `✅ Warn action added: **${count} warns** -> **${action}**.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "remove-action") {
@@ -241,7 +241,7 @@ module.exports = {
           );
           return interaction.reply({
             content: `✅ Warn action for **${count} warns** removed.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "list") {
@@ -249,7 +249,7 @@ module.exports = {
           if (actions.size === 0)
             return interaction.reply({
               content: "No warn actions configured.",
-              ephemeral: true,
+              flags: 64,
             });
           const embed = new EmbedBuilder()
             .setTitle("Warn Actions")
@@ -257,13 +257,13 @@ module.exports = {
           actions.forEach((val, key) =>
             embed.addFields({ name: `${key} warns`, value: val, inline: true }),
           );
-          return interaction.reply({ embeds: [embed], ephemeral: true });
+          return interaction.reply({ embeds: [embed], flags: 64 });
         }
         if (sub === "reset") {
           await db.updateSettings(guildId, { warnActions: {} });
           return interaction.reply({
             content: "✅ All warn actions have been reset.",
-            ephemeral: true,
+            flags: 64,
           });
         }
       }
@@ -278,7 +278,7 @@ module.exports = {
           });
           return interaction.reply({
             content: `✅ Log channel set to <#${channel.id}>.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "category") {
@@ -289,7 +289,7 @@ module.exports = {
           });
           return interaction.reply({
             content: `✅ Log category **${name}** is now **${state ? "enabled" : "disabled"}**.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "enable-all") {
@@ -314,7 +314,7 @@ module.exports = {
           await db.updateSettings(guildId, updates);
           return interaction.reply({
             content: "✅ All log categories enabled.",
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "disable-all") {
@@ -339,7 +339,7 @@ module.exports = {
           await db.updateSettings(guildId, updates);
           return interaction.reply({
             content: "✅ All log categories disabled.",
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "status") {
@@ -364,7 +364,7 @@ module.exports = {
             (val, key) => (catStr += `${val ? "🟢" : "🔴"} ${key}\n`),
           );
           embed.setDescription(catStr || "No categories configured");
-          return interaction.reply({ embeds: [embed], ephemeral: true });
+          return interaction.reply({ embeds: [embed], flags: 64 });
         }
       }
 
@@ -379,7 +379,7 @@ module.exports = {
           await db.updateSettings(guildId, updates);
           return interaction.reply({
             content: "✅ Autorole settings updated.",
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "welcome") {
@@ -391,7 +391,7 @@ module.exports = {
           await db.updateSettings(guildId, updates);
           return interaction.reply({
             content: "✅ Welcome settings updated.",
-            ephemeral: true,
+            flags: 64,
           });
         }
         if (sub === "farewell") {
@@ -403,7 +403,7 @@ module.exports = {
           await db.updateSettings(guildId, updates);
           return interaction.reply({
             content: "✅ Farewell settings updated.",
-            ephemeral: true,
+            flags: 64,
           });
         }
       }
@@ -417,7 +417,7 @@ module.exports = {
           });
           return interaction.reply({
             content: `✅ Marriage announcement channel set to <#${channel.id}>.`,
-            ephemeral: true,
+            flags: 64,
           });
         }
       }
@@ -425,7 +425,7 @@ module.exports = {
       console.error("Config command error:", error);
       await interaction.reply({
         content: "❌ An error occurred during configuration.",
-        ephemeral: true,
+        flags: 64,
       });
     }
   },

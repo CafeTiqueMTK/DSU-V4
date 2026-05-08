@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2026-05-08]
+- feat: refonte complète du dashboard web avec le style "Manus AI" (OLED Dark, glassmorphism, bento grids)
+- feat: intégration de Tailwind CSS et Lucide Icons pour une interface moderne et réactive
+- feat: nouveau système de tickets complet gérable depuis le web (catégorie, rôle support, messages personnalisés)
+- feat: création d'un builder d'Embeds visuel avec prévisualisation Discord en temps réel
+- feat: ajout d'un manager CLI `dsu.sh` pour simplifier le lancement (prod, dev, mockui) et la gestion de MongoDB
+- feat: implémentation d'un mode de test UI autonome (`test-ui.js`) avec mocking complet de Discord.js et MongoDB
+- feat: support de l'option `-nowebui` pour désactiver l'interface web au lancement
+- docs: mise à jour de `archi.md` pour refléter la nouvelle structure de gestion et de test
+- docs: ajout de `CLAUDE.md` pour définir les standards de développement du projet
+
 ## [2026-05-02]
 - feat: expanded web dashboard with full server management (moderation, logs, automod, general settings)
 - feat: implemented member moderation via web (ban, kick, warn, mute) with modals
@@ -33,3 +44,22 @@ All notable changes to this project will be documented in this file.
 - refactor: centralized command structure into thematic files
 - feat: updated command loader to support files exporting multiple commands via arrays
 - feat: added production and local modes for environment configuration
+
+## [2026-05-07]
+- feat: extension de l'Automod avec anti-link, anti-invite et anti-role ping
+- feat: ajout des sous-commandes de configuration `/automod antilink/antiinvite/antirole/blockrole`
+- refactor: fusion des listes `nsfw_en.json` et `nsfw_fr.json` vers `banword.json` et chargement dynamique par le bot
+- docs: création de `GEMINI.md` avec les règles de design du bot (embeds uniquement, commandes distinctes)
+- feat: ajout de la commande standalone `/ping` pour mesurer la latence
+- feat: suppression complète de l'intégration Google Gemini (commandes, logs, config)
+- docs: refonte complète du README.md pour présenter les fonctionnalités du bot en français
+
+## [2026-05-06]
+- chore: removed all emojis from terminal and file logs for a cleaner output
+- fix: corrected corrupted structure and syntax errors in `src/db.js`
+- feat: complete visual overhaul of Discord embeds for a "richer" and more premium look
+- feat: introduced `src/utils/embeds.js` to centralize bot styling (colors, emojis, templates)
+- refactor: updated all command modules (admin, economy, fun, moderation, general, tickets, roles, integrations) to use the new styling utility
+- refactor: enhanced event embeds for welcome, farewell, and log notifications
+- feat: improved `info server` and `info bot` commands with more detailed statistics and better layout
+- feat: added more interactive visual cues (emojis, fields) to all moderation and economy responses

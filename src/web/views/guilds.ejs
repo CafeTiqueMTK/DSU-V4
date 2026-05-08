@@ -1,44 +1,70 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Serveurs | DSU-V4</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <%- include('partials/head', { title: 'Serveurs' }) %>
 </head>
-<body>
-    <nav>
-        <div class="container">
-            <a href="/" class="logo">DSU-V4</a>
-            <div class="nav-links">
-                <a href="/">Accueil</a>
-                <a href="/guilds">Serveurs</a>
-                <a href="/logout" class="logout-link">Déconnexion</a>
-            </div>
-        </div>
-    </nav>
+<body class="bg-[#0a0a0a] min-h-screen selection:bg-indigo-500/30">
+    <%- include('partials/navbar') %>
 
-    <main class="container guilds-container">
-        <header>
-            <h1 class="section-title">Vos Serveurs</h1>
-            <p class="section-subtitle">Sélectionnez un serveur pour le configurer.</p>
+    <main class="max-w-7xl mx-auto px-6 pt-28 pb-12 min-h-screen">
+        <!-- Hero Header -->
+        <header class="mb-16 text-center max-w-2xl mx-auto">
+            <div class="inline-flex items-center justify-center p-3 bg-white/5 rounded-2xl border border-white/10 mb-6 shadow-inner">
+                <i data-lucide="layout-grid" class="w-6 h-6 text-zinc-300"></i>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight mb-4">
+                Sélectionnez un <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Serveur</span>
+            </h1>
+            <p class="text-zinc-400 text-lg">
+                Choisissez le serveur que vous souhaitez configurer. Gérez l'automodération, les logs et bien plus encore.
+            </p>
         </header>
 
-        <div class="grid-guilds">
+        <!-- Bento Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <% bot.guilds.cache.forEach(guild => { %>
-                <div class="card card-centered">
-                    <div class="guild-icon-wrapper">
-                        <% if (guild.icon) { %>
-                            <img src="<%= guild.iconURL() %>" alt="<%= guild.name %>" class="guild-icon">
-                        <% } else { %>
-                            <span class="guild-icon-placeholder"><%= guild.name.charAt(0) %></span>
-                        <% } %>
+                <div class="glass-card p-8 rounded-[2rem] flex flex-col items-center text-center group">
+                    <!-- Icon Container -->
+                    <div class="relative mb-6">
+                        <div class="absolute inset-0 bg-indigo-500/20 rounded-[1.5rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div class="relative w-24 h-24 rounded-[1.5rem] overflow-hidden bg-zinc-900 border border-white/5 shadow-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:border-white/10">
+                            <% if (guild.icon) { %>
+                                <img src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>.png?size=256" alt="<%= guild.name %>" class="w-full h-full object-cover">
+                            <% } else { %>
+                                <div class="text-4xl font-bold text-zinc-600 group-hover:text-zinc-300 transition-colors">
+                                    <%= guild.name.charAt(0) %>
+                                </div>
+                            <% } %>
+                        </div>
                     </div>
-                    <h3 class="guild-name"><%= guild.name %></h3>
-                    <a href="/guilds/<%= guild.id %>" class="btn btn-primary btn-block">Configurer</a>
+
+                    <!-- Server Info -->
+                    <div class="mb-8 w-full">
+                        <h3 class="text-xl font-bold text-white truncate px-2" title="<%= guild.name %>">
+                            <%= guild.name %>
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-medium">ID: <%= guild.id %></p>
+                    </div>
+
+                    <!-- Action Button -->
+                    <a href="/guilds/<%= guild.id %>" class="mt-auto w-full inline-flex justify-center items-center gap-2.5 bg-white text-black font-bold py-3.5 px-5 rounded-2xl transition-all duration-200 hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-white/5">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                        Configurer
+                    </a>
                 </div>
             <% }); %>
+
+            <!-- Add Bot Card (Invite Link) -->
+            <a href="https://discord.com/api/oauth2/authorize?client_id=<%= bot.user.id %>&permissions=8&scope=bot%20applications.commands" target="_blank" class="p-8 rounded-[2rem] border-2 border-dashed border-white/5 hover:border-indigo-500/30 hover:bg-white/[0.02] transition-all flex flex-col items-center justify-center text-center group min-h-[320px]">
+                <div class="w-16 h-16 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center mb-6 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all">
+                    <i data-lucide="plus" class="w-8 h-8 text-zinc-500 group-hover:text-indigo-400 transition-colors"></i>
+                </div>
+                <h3 class="text-lg font-bold text-zinc-400 group-hover:text-white transition-colors">Ajouter le Bot</h3>
+                <p class="text-sm text-zinc-600 mt-2">Invitez DSU-V4 sur un autre serveur.</p>
+            </a>
         </div>
     </main>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

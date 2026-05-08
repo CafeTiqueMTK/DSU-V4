@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const UserData = require("../../models/UserData");
+const { Colors, Emojis } = require("../../utils/embeds");
 
 class ModerationService {
   async getWarns(guildId, userId) {
@@ -36,11 +37,6 @@ class ModerationService {
   }
 
   async logModAction(guild, userTag, action, reason, moderator, extra = []) {
-    // We'll require db here to avoid circular dependency if possible, 
-    // but better to pass settings or use a different approach.
-    // Actually, ModerationService doesn't have access to db easily without circular dependency 
-    // if db.js requires ModerationService.
-    // Let's check db.js imports.
     const db = require("../../db");
     const settings = await db.getSettings(guild.id);
     const conf = settings.logs;
@@ -51,14 +47,14 @@ class ModerationService {
         const logChannel = guild.channels.cache.get(conf.channel);
         if (logChannel) {
           const embed = new EmbedBuilder()
-            .setTitle(`🛡️ Moderation: ${action}`)
+            .setTitle(`${Emojis.MOD} Moderation: ${action}`)
             .addFields(
-              { name: "User", value: userTag, inline: true },
-              { name: "Moderator", value: typeof moderator === 'string' ? moderator : moderator.tag, inline: true },
-              { name: "Reason", value: reason || "No reason specified" },
+              { name: "👤 User", value: `**${userTag}**`, inline: true },
+              { name: "🛡️ Moderator", value: typeof moderator === 'string' ? `**${moderator}**` : `**${moderator.tag}**`, inline: true },
+              { name: "📝 Reason", value: reason || "No reason specified" },
               ...extra,
             )
-            .setColor(0xffa500)
+            .setColor(Colors.MODERATION)
             .setTimestamp();
           await logChannel.send({ embeds: [embed] }).catch(() => {});
         }

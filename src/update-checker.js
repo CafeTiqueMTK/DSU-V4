@@ -2,6 +2,7 @@ const { EmbedBuilder } = require("discord.js");
 const fetch = require("node-fetch");
 const db = require("./db.js");
 const { config: envConfig } = require("./utils/env.js");
+const { Colors, Emojis } = require("./utils/embeds");
 
 class UpdateChecker {
   constructor(client) {
@@ -12,7 +13,7 @@ class UpdateChecker {
 
   start() {
     if (this.timer) return;
-    console.log("🔄 Update checker started.");
+    console.log("Update checker started.");
     this.checkForUpdates();
     this.timer = setInterval(() => this.checkForUpdates(), this.checkInterval);
   }
@@ -39,7 +40,7 @@ class UpdateChecker {
         await this.checkGuildUpdates(guild, channel, config, guildId);
       }
     } catch (error) {
-      console.error("❌ Error in UpdateChecker:", error);
+      console.error("Error in UpdateChecker:", error);
     }
   }
 
@@ -94,11 +95,11 @@ class UpdateChecker {
       db.set("updates.json", updateConfig);
 
       const embed = new EmbedBuilder()
-        .setTitle("🚀 New Update Available!")
+        .setTitle(`🚀 New Update Available!`)
         .setDescription(`**${latest.commit.message.split("\n")[0]}**`)
-        .setColor(0x00ff99)
+        .setColor(Colors.SUCCESS)
         .addFields(
-          { name: "👤 Author", value: latest.commit.author.name, inline: true },
+          { name: "👤 Author", value: `**${latest.commit.author.name}**`, inline: true },
           {
             name: "🔗 Commit",
             value: `[\`${latest.sha.substring(0, 7)}\`](${latest.html_url})`,
@@ -112,7 +113,7 @@ class UpdateChecker {
         embeds: [embed],
       });
     } catch (e) {
-      console.error(`❌ Update check failed for ${guild.name}:`, e.message);
+      console.error(`Update check failed for ${guild.name}:`, e.message);
     }
   }
 }

@@ -1,35 +1,61 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion | DSU-V4</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <%- include('partials/head', { title: 'Connexion' }) %>
 </head>
-<body class="login-page">
-    <div class="card login-card">
-        <header class="login-header">
-            <h1 class="login-title">DSU-V4</h1>
-            <p class="login-subtitle">Identification requise</p>
-        </header>
+<body class="bg-[#0a0a0a] min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500/30">
+    <div class="glass-card w-full max-w-md p-8 rounded-3xl relative overflow-hidden group">
+        <!-- Subtle Glow Effect -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl group-hover:bg-indigo-500/30 transition-all duration-500"></div>
+        <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl group-hover:bg-purple-500/30 transition-all duration-500"></div>
 
-        <% if (error) { %>
-            <div class="alert-danger">
-                <%= error %>
+        <div class="relative z-10">
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-indigo-400"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">DSU-V4</h1>
+                <p class="text-zinc-400 text-sm mt-1">Authentification requise</p>
             </div>
-        <% } %>
 
-        <form action="/login" method="POST">
-            <div class="form-group">
-                <label class="form-label">Utilisateur</label>
-                <input type="text" name="username" class="form-input" required autofocus>
-            </div>
-            <div class="form-group mb-xl">
-                <label class="form-label">Mot de passe</label>
-                <input type="password" name="password" class="form-input" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg">Se connecter</button>
-        </form>
+            <% if (locals.error) { %>
+                <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl mb-6 flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                    <p class="text-sm font-medium"><%= error %></p>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST" class="space-y-5">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-zinc-300 ml-1">Utilisateur</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="user" class="w-5 h-5 text-zinc-500"></i>
+                        </div>
+                        <input type="text" name="username" required autofocus
+                            class="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-medium text-zinc-300 ml-1">Mot de passe</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="lock" class="w-5 h-5 text-zinc-500"></i>
+                        </div>
+                        <input type="password" name="password" required
+                            class="w-full bg-zinc-900/50 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-white text-black hover:bg-zinc-200 font-semibold rounded-xl py-3 mt-4 transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+                    <span>Se connecter</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"></i>
+                </button>
+            </form>
+        </div>
     </div>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 const { Events, EmbedBuilder } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
+const { createLogEmbed, Colors } = require("../utils/embeds");
 
 module.exports = {
   name: Events.MessageDelete,
@@ -33,15 +34,14 @@ module.exports = {
           client.automodCooldown.set(cooldownKey, now);
 
           try {
-            await message.author.send({
-              embeds: [
-                {
-                  title: "Sanction Automod",
-                  description: `Tu as été sanctionné pour : **Ghost ping**\nMerci de respecter les règles du serveur.`,
-                  color: 0xff0000,
-                },
-              ],
-            });
+            const dmEmbed = createLogEmbed(
+              "⚠️ Warning - Violation Detected",
+              `Hello ${message.author.username},\n\nYour message has been flagged: **Ghost Ping**\nReason: Thanks for respecting the server rules and avoiding ghost pings.`,
+              Colors.WARNING,
+              [],
+              "🚨 Automod System"
+            );
+            await message.author.send({ embeds: [dmEmbed] }).catch(() => {});
           } catch {}
 
           const actionChannelId = guildSettings.actionChannel;
@@ -50,9 +50,11 @@ module.exports = {
               message.guild.channels.cache.get(actionChannelId);
             if (notifChannel) {
               const ghostPingCat = guildSettings.categories.ghostPing;
-              const embed = new EmbedBuilder()
-                .setTitle("🚨 Automod Action")
-                .addFields(
+              const embed = createLogEmbed(
+                "🚨 Automod Action",
+                null,
+                Colors.AUTOMOD,
+                [
                   {
                     name: "User",
                     value: `<@${message.author.id}>`,
@@ -64,9 +66,9 @@ module.exports = {
                     inline: true,
                   },
                   { name: "Reason", value: "Ghost ping", inline: false },
-                )
-                .setColor(0xff0000)
-                .setTimestamp(new Date());
+                ],
+                "🚨 Automod System"
+              );
               await notifChannel.send({ embeds: [embed] });
             }
           }
@@ -97,9 +99,11 @@ module.exports = {
     try {
       const logChannel = await getLogChannel(message.guild, "messages");
       if (logChannel) {
-        const embed = new EmbedBuilder()
-          .setTitle("🗑️ Message Deleted")
-          .addFields(
+        const embed = createLogEmbed(
+          "🗑️ Message Deleted",
+          null,
+          Colors.WARNING,
+          [
             {
               name: "Author",
               value: `${message.author.tag} (<@${message.author.id}>)`,
@@ -115,11 +119,11 @@ module.exports = {
               value: message.content || "No content (embed/attachment)",
               inline: false,
             },
-          )
-          .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
-          .setColor(0xff5555)
-          .setFooter({ text: "DSU Message Logger" })
-          .setTimestamp(new Date());
+          ],
+          "ℹ️ Message Logger"
+        )
+        .setThumbnail(message.author.displayAvatarURL({ dynamic: true }));
+
         await logChannel.send({ embeds: [embed] });
       }
     } catch (error) {}

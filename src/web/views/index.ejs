@@ -1,60 +1,63 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSU-V4 | Dashboard</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <%- include('partials/head', { title: 'Accueil' }) %>
 </head>
-<body>
-    <nav>
-        <div class="container">
-            <a href="/" class="logo">DSU-V4</a>
-            <div class="nav-links">
-                <a href="/">Accueil</a>
-                <a href="/guilds">Serveurs</a>
-                <a href="/logout" class="logout-link">Déconnexion</a>
-            </div>
+<body class="bg-[#0a0a0a] min-h-screen selection:bg-indigo-500/30 flex flex-col items-center justify-center overflow-x-hidden">
+    <%- include('partials/navbar') %>
+
+    <main class="max-w-4xl w-full px-6 py-12 text-center">
+        <!-- Badge Statut -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-8 animate-fade-in">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full <%= bot.readyAt ? 'bg-emerald-400' : 'bg-red-400' %> opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 <%= bot.readyAt ? 'bg-emerald-500' : 'bg-red-500' %>"></span>
+            </span>
+            Bot <%= bot.readyAt ? 'Opérationnel' : 'Hors-ligne' %>
         </div>
-    </nav>
 
-    <main class="container">
-        <header>
-            <h1 class="section-title">Tableau de bord</h1>
-            <p class="section-subtitle">Connecté en tant que <strong><%= bot.user.tag %></strong></p>
-        </header>
+        <!-- Titre & Description -->
+        <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+            Panel de Contrôle <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Serveurs</span>
+        </h1>
+        <p class="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto mb-12">
+            Gérez la configuration, l'automodération et les systèmes de vos serveurs Discord depuis une interface unique et épurée.
+        </p>
 
-        <section class="grid-stats">
-            <div class="card">
-                <p class="card-label">Statut</p>
-                <div class="status-indicator <%= bot.readyAt ? 'status-online' : 'status-offline' %>">
-                    <%= bot.readyAt ? 'En ligne' : 'Hors ligne' %>
+        <!-- Bento Grid Minimaliste -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
+            <!-- Stats Rapide: Serveurs -->
+            <div class="glass-card p-6 rounded-3xl flex items-center justify-between group">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Configuration</p>
+                    <div class="text-3xl font-bold text-white"><%= bot.guilds.cache.size %></div>
+                    <p class="text-xs text-zinc-500">Serveurs actifs</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">
+                    <i data-lucide="server" class="w-6 h-6 text-indigo-400"></i>
                 </div>
             </div>
-            <div class="card">
-                <p class="card-label">Serveurs</p>
-                <div class="stat-value"><%= bot.guilds.cache.size %></div>
-            </div>
-            <div class="card">
-                <p class="card-label">Utilisateurs</p>
-                <div class="stat-value"><%= bot.users.cache.size %></div>
-            </div>
-            <div class="card">
-                <p class="card-label">Commandes</p>
-                <div class="stat-value"><%= bot.commands.size %></div>
-            </div>
-        </section>
 
-        <section>
-            <h2 class="form-section-title">Actions rapides</h2>
-            <div class="grid-stats"> <!-- Utilise grid-stats pour aligner parfaitement les colonnes -->
-                <a href="/guilds" class="card card-link">
-                    <p class="card-label">Management</p>
-                    <h3 class="card-title">Gérer les serveurs</h3>
-                    <p class="card-text">Configurez l'automod, les logs et plus encore.</p>
-                </a>
+            <!-- Stats Rapide: Commandes -->
+            <div class="glass-card p-6 rounded-3xl flex items-center justify-between group">
+                <div class="text-left">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Système</p>
+                    <div class="text-3xl font-bold text-white">v1.0.0</div>
+                    <p class="text-xs text-zinc-500">Stable Build</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-white/10 transition-colors">
+                    <i data-lucide="shield-check" class="w-6 h-6 text-zinc-300"></i>
+                </div>
             </div>
-        </section>
+        </div>
+
+        <!-- Action Principale -->
+        <a href="/guilds" class="inline-flex items-center gap-3 px-10 py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-all active:scale-95 shadow-2xl shadow-white/5 group">
+            Gérer mes serveurs
+            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+        </a>
     </main>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -1,414 +1,512 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuration | <%= guild.name %></title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/icons/sprite.svg">
+    <%- include('partials/head') %>
 </head>
-<body>
-    <nav>
-        <div class="container">
-            <a href="/" class="logo">DSU-V4</a>
-            <div class="nav-links">
-                <a href="/">Accueil</a>
-                <a href="/guilds">Serveurs</a>
-                <a href="/logout" class="logout-link">Déconnexion</a>
-            </div>
-        </div>
-    </nav>
+<body class="bg-manus-900 text-gray-100 font-sans antialiased min-h-screen flex">
+    <%- include('partials/navbar') %>
+    <%- include('partials/sidebar') %>
 
-    <main class="container">
-        <header>
-            <div class="back-link-wrapper">
-                <a href="/guilds" class="back-link">← Retour</a>
+    <main class="md:ml-64 pt-16 min-h-screen p-8 flex-1 w-full">
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Configuration</h1>
+                <p class="text-sm text-zinc-400 mt-1">Gérez les paramètres de <span class="text-white font-medium"><%= guild.name %></span></p>
             </div>
-            <h1 class="section-title"><%= guild.name %></h1>
-            <p class="section-subtitle mb-0">Gestion complète du serveur.</p>
+            <a href="/guilds" class="px-4 py-2 bg-zinc-800/50 hover:bg-zinc-800 text-sm font-medium rounded-xl border border-white/10 transition-colors flex items-center gap-2 w-fit">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Retour aux serveurs
+            </a>
         </header>
 
-        <% if (success) { %>
-            <div class="alert-success">✓ Modifications enregistrées avec succès</div>
-        <% } %>
-        <% if (error) { %>
-            <div class="alert-danger"><%= error %></div>
-        <% } %>
-
-        <div class="settings-layout">
-            <!-- Icon Sidebar -->
-            <div class="sidebar-icons">
-                <a href="/guilds" class="sidebar-icon home" title="Retour">
-                    <svg class="icon"><use href="#icon-home"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Retour</span>
-                </a>
-                
-                <div class="sidebar-separator"></div>
-                
-                <a href="?tab=general" class="sidebar-icon <%= tab === 'general' ? 'active' : '' %>" title="Général">
-                    <svg class="icon"><use href="#icon-general"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Général</span>
-                </a>
-                
-                <a href="?tab=moderation" class="sidebar-icon <%= tab === 'moderation' ? 'active' : '' %>" title="Modération">
-                    <svg class="icon"><use href="#icon-moderation"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Modération</span>
-                </a>
-                
-                <a href="?tab=automod" class="sidebar-icon <%= tab === 'automod' ? 'active' : '' %>" title="Automod">
-                    <svg class="icon"><use href="#icon-automod"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Automod</span>
-                </a>
-                
-                <a href="?tab=logs" class="sidebar-icon <%= tab === 'logs' ? 'active' : '' %>" title="Logs">
-                    <svg class="icon"><use href="#icon-logs"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Logs</span>
-                </a>
-                
-                <a href="?tab=modules" class="sidebar-icon <%= tab === 'modules' ? 'active' : '' %>" title="Modules">
-                    <svg class="icon"><use href="#icon-modules"></use></svg>
-                    <div class="icon-bg"></div>
-                    <span class="icon-text">Modules</span>
-                </a>
+        <% if (locals.success) { %>
+            <div class="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 flex items-center gap-3">
+                <i data-lucide="check-circle" class="w-5 h-5 shrink-0"></i>
+                <p class="text-sm font-medium">Modifications enregistrées avec succès.</p>
             </div>
+        <% } %>
 
-            <!-- Settings Content -->
-            <div class="settings-content">
-                <% if (tab === 'general') { %>
-                <form action="/guilds/<%= guild.id %>/settings/general" method="POST" class="settings-form">
-                    <div class="settings-grid">
-                        <div class="card">
-                            <h2 class="form-section-title">👋 Bienvenue & Départ</h2>
-                            <div class="switch-group">
-                                <span class="form-label mb-0">Activer les messages de bienvenue</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="welcome_enabled" <%= settings.welcome?.enabled ? 'checked' : '' %>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Salon de bienvenue</label>
-                                <select name="welcome_channel" class="form-input select-input">
-                                    <option value="">Aucun</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.welcome?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-
-                            <hr style="border:0; border-top:1px solid var(--color-border); margin: var(--space-md) 0;">
-
-                            <div class="switch-group">
-                                <span class="form-label mb-0">Activer les messages de départ</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="farewell_enabled" <%= settings.farewell?.enabled ? 'checked' : '' %>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Salon de départ</label>
-                                <select name="farewell_channel" class="form-input select-input">
-                                    <option value="">Aucun</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.farewell?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h2 class="form-section-title">🎭 Rôles</h2>
-                            <div class="switch-group">
-                                <span class="form-label mb-0">Activer l'Autorole (à l'arrivée)</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="autorole_enabled" <%= settings.autorole?.enabled ? 'checked' : '' %>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Rôle à attribuer</label>
-                                <select name="autorole_roleId" class="form-input select-input">
-                                    <option value="">Aucun</option>
-                                    <% roles.forEach(role => { %>
-                                        <option value="<%= role.id %>" <%= settings.autorole?.roleId === role.id ? 'selected' : '' %>><%= role.name %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions mt-lg">
-                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
-                    </div>
-                </form>
-                <% } %>
-
-                <% if (tab === 'moderation') { %>
-                <div class="settings-grid">
-                    <section class="card full-width">
-                        <h2 class="form-section-title">🔨 Membres & Modération</h2>
-                        <table class="member-list">
-                            <thead>
-                                <tr style="text-align: left; border-bottom: 2px solid var(--color-border);">
-                                    <th class="member-cell form-label">Membre</th>
-                                    <th class="member-cell form-label" style="text-align: right;">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% members.forEach(member => { %>
-                                <tr class="member-row">
-                                    <td class="member-cell">
-                                        <div class="member-info">
-                                            <img src="<%= member.avatar %>" alt="" class="member-avatar">
-                                            <span class="member-tag"><%= member.tag %></span>
-                                        </div>
-                                    </td>
-                                    <td class="member-cell">
-                                        <div class="member-actions">
-                                            <button class="btn btn-ghost action-btn" onclick="openModModal('warn', '<%= member.id %>', '<%= member.tag %>')">Warn</button>
-                                            <button class="btn btn-ghost action-btn" onclick="openModModal('mute', '<%= member.id %>', '<%= member.tag %>')">Mute</button>
-                                            <button class="btn btn-ghost action-btn action-btn-danger" onclick="openModModal('kick', '<%= member.id %>', '<%= member.tag %>')">Kick</button>
-                                            <button class="btn btn-primary action-btn action-btn-danger" onclick="openModModal('ban', '<%= member.id %>', '<%= member.tag %>')">Ban</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <% }) %>
-                            </tbody>
-                        </table>
-                        <div class="mt-lg">
-                            <p class="card-text">Affichage des 50 premiers membres. Utilisez les commandes Discord pour une recherche précise.</p>
-                        </div>
-                    </section>
-                </div>
-                <% } %>
-
-                <% if (tab === 'automod') { %>
-                <form action="/guilds/<%= guild.id %>/settings/automod" method="POST" class="settings-form">
-                    <div class="settings-grid">
-                        <div class="card">
-                            <h2 class="form-section-title">🛡️ Automod & Sécurité</h2>
-                            <div class="switch-group">
-                                <span class="form-label mb-0">Activer l'Automod global</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="automod_enabled" <%= settings.automod?.enabled ? 'checked' : '' %>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Salon d'alerte (actions automod)</label>
-                                <select name="automod_channel" class="form-input select-input">
-                                    <option value="">Aucun</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.automod?.actionChannel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-
-                            <div class="checkbox-grid">
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="antiSpam" <%= settings.antiSpam?.enabled ? 'checked' : '' %>>
-                                    <span>Anti-Spam</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="antiInvites" <%= settings.antiInvites?.enabled ? 'checked' : '' %>>
-                                    <span>Anti-Invitations</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="antiLinks" <%= settings.antiLinks?.enabled ? 'checked' : '' %>>
-                                    <span>Anti-Liens</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="antiRaid" <%= settings.antiRaid?.enabled ? 'checked' : '' %>>
-                                    <span>Anti-Raid</span>
-                                </label>
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="antiMassMention" <%= settings.antiMassMention?.enabled ? 'checked' : '' %>>
-                                    <span>Anti-Mass Mention</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-actions mt-lg">
-                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
-                    </div>
-                </form>
-                <% } %>
-
-                <% if (tab === 'logs') { %>
-                <form action="/guilds/<%= guild.id %>/settings/logs" method="POST" class="settings-form">
-                    <div class="settings-grid">
-                        <div class="card">
-                            <h2 class="form-section-title">📜 Configuration des Logs</h2>
-                            <div class="switch-group">
-                                <span class="form-label mb-0">Activer le système de logs</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="logs_enabled" <%= settings.logs?.enabled ? 'checked' : '' %>>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Salon de logs principal</label>
-                                <select name="logs_channel" class="form-input select-input">
-                                    <option value="">Aucun</option>
-                                    <% channels.forEach(ch => { %>
-                                        <option value="<%= ch.id %>" <%= settings.logs?.channel === ch.id ? 'selected' : '' %>><%= ch.name %></option>
-                                    <% }) %>
-                                </select>
-                            </div>
-
-                            <h3 class="form-label mt-lg" style="color: var(--color-text-primary);">Catégories à logger :</h3>
-                            <div class="checkbox-grid">
-                                <% 
-                                    const logCats = settings.logs?.categories || {};
-                                    const allCats = ['arrived', 'farewell', 'vocal', 'mod', 'automod', 'commands', 'roles', 'channels', 'economy', 'messages', 'invites', 'gemini'];
-                                    allCats.forEach(cat => { 
-                                %>
-                                    <label class="checkbox-item">
-                                        <input type="checkbox" name="log_<%= cat %>" <%= logCats[cat] ? 'checked' : '' %>>
-                                        <span><%= cat.charAt(0).toUpperCase() + cat.slice(1) %></span>
-                                    </label>
-                                <% }) %>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-actions mt-lg">
-                        <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
-                    </div>
-                </form>
-                <% } %>
-
-                <% if (tab === 'modules') { %>
-                <div class="settings-grid">
-                    <div class="card">
-                        <h2 class="form-section-title">💰 Economie</h2>
-                        <p class="card-text">Gérez les multiplicateurs, les salaires et les banques.</p>
-                        <div class="mt-lg">
-                            <button class="btn btn-ghost btn-block">Configurer</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h2 class="form-section-title">🎫 Tickets</h2>
-                        <p class="card-text">Configuration du système de support.</p>
-                        <div class="mt-lg">
-                            <button class="btn btn-ghost btn-block">Configurer</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h2 class="form-section-title">💍 Mariage</h2>
-                        <p class="card-text">Paramètres des unions et divorces.</p>
-                        <div class="mt-lg">
-                            <button class="btn btn-ghost btn-block">Configurer</button>
-                        </div>
-                    </div>
-                </div>
-                <% } %>
-
+        <% if (locals.error) { %>
+            <div class="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0"></i>
+                <p class="text-sm font-medium"><%= error %></p>
             </div>
-        </div>
-    </main>
+        <% } %>
 
-    <!-- Icon Sprite Definition -->
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-        <!-- General Icon (Settings/Cog) -->
-        <symbol id="icon-general" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
-        </symbol>
+        <% if (tab === 'general') { %>
+            <form action="/guilds/<%= guild.id %>/settings/general" method="POST" class="max-w-2xl">
+                <div class="glass-card rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-5 h-5 text-indigo-400"></i>
+                            Paramètres Généraux
+                        </h2>
+                        <p class="text-sm text-zinc-400 mt-1">Configurez les informations de base du bot.</p>
+                    </div>
 
-        <!-- Moderation Icon (Gavel/Hammer) -->
-        <symbol id="icon-moderation" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-        </symbol>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Préfixe des commandes</label>
+                            <input type="text" name="prefix" value="<%= settings.prefix || '!' %>" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-zinc-600">
+                        </div>
 
-        <!-- Automod Icon (Shield) -->
-        <symbol id="icon-automod" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-        </symbol>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Langue</label>
+                            <div class="relative">
+                                <select name="language" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                    <option value="fr" <%= settings.language === 'fr' ? 'selected' : '' %>>Français</option>
+                                    <option value="en" <%= settings.language === 'en' ? 'selected' : '' %>>English</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Logs Icon (List/Clipboard) -->
-        <symbol id="icon-logs" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-        </symbol>
-
-        <!-- Modules Icon (Puzzle/Pieces) -->
-        <symbol id="icon-modules" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-4H8v-2h2V9h2v2h2v2h-2v4z"/>
-        </symbol>
-
-        <!-- Home Icon (Dashboard) -->
-        <symbol id="icon-home" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-        </symbol>
-    </svg>
-
-    <!-- Modals -->
-    <div id="modModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="modalTitle" class="form-section-title">Action</h2>
-            <form id="modForm" method="POST">
-                <input type="hidden" name="userId" id="modalUserId">
-                
-                <div class="form-group">
-                    <label class="form-label">Raison</label>
-                    <input type="text" name="reason" class="form-input" placeholder="Optionnel">
-                </div>
-
-                <div id="durationGroup" class="form-group" style="display: none;">
-                    <label class="form-label">Durée (minutes)</label>
-                    <input type="number" name="duration" class="form-input" value="10" min="1">
-                </div>
-
-                <div class="form-actions mt-lg" style="grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-                    <button type="button" class="btn btn-ghost" onclick="closeModModal()">Annuler</button>
-                    <button type="submit" id="modalSubmit" class="btn btn-primary">Confirmer</button>
+                    <div class="pt-4 border-t border-white/10">
+                        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                            Enregistrer les modifications
+                        </button>
+                    </div>
                 </div>
             </form>
-        </div>
-    </div>
+        <% } else if (tab === 'automod') { %>
+            <form action="/guilds/<%= guild.id %>/settings/automod" method="POST">
+                <div class="glass-card rounded-2xl p-6 mb-8 max-w-4xl">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-indigo-400"></i>
+                                Configuration Globale
+                            </h2>
+                            <p class="text-sm text-zinc-400 mt-1">Activez l'Automod et définissez le salon d'alerte principal.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="automod_enabled" class="sr-only peer" <%= settings.automod?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
 
-    <script>
-        function openModModal(action, userId, userTag) {
-            const modal = document.getElementById('modModal');
-            const form = document.getElementById('modForm');
-            const title = document.getElementById('modalTitle');
-            const durationGroup = document.getElementById('durationGroup');
-            const submitBtn = document.getElementById('modalSubmit');
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'alerte</label>
+                        <div class="relative max-w-md">
+                            <select name="automod_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                <option value="">Aucun salon sélectionné</option>
+                                <% channels.forEach(ch => { %>
+                                    <option value="<%= ch.id %>" <%= settings.automod?.actionChannel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                <% }) %>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            document.getElementById('modalUserId').value = userId;
-            form.action = `/guilds/<%= guild.id %>/mod/${action}`;
-            
-            title.innerText = `${action.charAt(0).toUpperCase() + action.slice(1)} ${userTag}`;
-            
-            if (action === 'mute') {
-                durationGroup.style.display = 'block';
-            } else {
-                durationGroup.style.display = 'none';
-            }
+                <div class="bento-grid max-w-4xl mb-8">
+                    <%
+                        const modules = [
+                            { name: 'antiSpam', label: 'Anti-Spam', desc: 'Bloque les messages répétés trop rapidement', icon: 'message-square-off' },
+                            { name: 'antiInvites', label: 'Anti-Invitations', desc: 'Supprime les liens d\'invitation vers d\'autres serveurs', icon: 'link-2-off' },
+                            { name: 'antiLinks', label: 'Anti-Liens', desc: 'Interdit le partage de liens web non autorisés', icon: 'globe' },
+                            { name: 'antiRaid', label: 'Anti-Raid', desc: 'Détecte et bloque les arrivées massives (raids)', icon: 'users' },
+                            { name: 'antiMassMention', label: 'Anti-Mentions', desc: 'Empêche le spam abusif de mentions', icon: 'at-sign' }
+                        ];
+                        modules.forEach(mod => {
+                    %>
+                        <div class="glass-card rounded-2xl p-5 flex items-start justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-xl bg-zinc-800/80 border border-white/5 flex items-center justify-center shrink-0">
+                                    <i data-lucide="<%= mod.icon %>" class="w-5 h-5 text-indigo-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-white"><%= mod.label %></h3>
+                                    <p class="text-xs text-zinc-400 mt-1 leading-relaxed"><%= mod.desc %></p>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                                <input type="checkbox" name="<%= mod.name %>" class="sr-only peer" <%= settings[mod.name]?.enabled ? 'checked' : '' %>>
+                                <div class="w-9 h-5 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:after:bg-white"></div>
+                            </label>
+                        </div>
+                    <% }) %>
+                </div>
 
-            if (action === 'ban' || action === 'kick') {
-                submitBtn.classList.add('action-btn-danger');
-            } else {
-                submitBtn.classList.remove('action-btn-danger');
-            }
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                    Enregistrer l'Automod
+                </button>
+            </form>
+        <% } else if (tab === 'welcome') { %>
+            <form action="/guilds/<%= guild.id %>/settings/welcome" method="POST" class="max-w-4xl space-y-8">
+                <!-- Welcome -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="user-plus" class="w-5 h-5 text-green-400"></i>
+                                Message de Bienvenue
+                            </h2>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="welcome_enabled" class="sr-only peer" <%= settings.welcome?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500 peer-checked:border-green-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
 
-            modal.classList.add('modal-open');
-        }
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
+                            <div class="relative">
+                                <select name="welcome_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all appearance-none">
+                                    <option value="">Aucun salon</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.welcome?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
+                            <textarea name="welcome_message" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-green-500 transition-all resize-none" placeholder="Bienvenue {user} sur {server} !"><%= settings.welcome?.message || '' %></textarea>
+                            <p class="text-xs text-zinc-500 mt-1">Variables : {user}, {server}, {memberCount}</p>
+                        </div>
+                    </div>
+                </div>
 
-        function closeModModal() {
-            document.getElementById('modModal').classList.remove('modal-open');
-        }
+                <!-- Farewell -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="user-minus" class="w-5 h-5 text-red-400"></i>
+                                Message de Départ
+                            </h2>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="farewell_enabled" class="sr-only peer" <%= settings.farewell?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500 peer-checked:border-red-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
 
-        // Close modal on click outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('modModal');
-            if (event.target == modal) {
-                closeModModal();
-            }
-        }
-    </script>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon d'annonce</label>
+                            <div class="relative">
+                                <select name="farewell_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all appearance-none">
+                                    <option value="">Aucun salon</option>
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>" <%= settings.farewell?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message personnalisé</label>
+                            <textarea name="farewell_message" rows="3" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all resize-none" placeholder="{user} vient de nous quitter."><%= settings.farewell?.message || '' %></textarea>
+                            <p class="text-xs text-zinc-500 mt-1">Variables : {user}, {server}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                    Enregistrer les messages
+                </button>
+            </form>
+        <% } else if (tab === 'roles') { %>
+            <form action="/guilds/<%= guild.id %>/settings/roles" method="POST" class="max-w-4xl space-y-8">
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="award" class="w-5 h-5 text-indigo-400"></i>
+                                Auto-Role
+                            </h2>
+                            <p class="text-sm text-zinc-400 mt-1">Attribue automatiquement un rôle aux nouveaux membres.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="autorole_enabled" class="sr-only peer" <%= settings.autorole?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
+
+                    <div class="max-w-md">
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Rôle à attribuer</label>
+                        <div class="relative">
+                            <select name="autorole_roleId" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                <option value="">Sélectionnez un rôle...</option>
+                                <% roles.forEach(role => { %>
+                                    <option value="<%= role.id %>" <%= settings.autorole?.roleId === role.id ? 'selected' : '' %>>@ <%= role.name %></option>
+                                <% }) %>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="ticket" class="w-5 h-5 text-indigo-400"></i>
+                                Système de Tickets
+                            </h2>
+                            <p class="text-sm text-zinc-400 mt-1">Gérez le rôle du support technique.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="tickets_enabled" class="sr-only peer" <%= settings.tickets?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Rôle de Support (Staff)</label>
+                            <div class="relative">
+                                <select name="tickets_roleId" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                    <option value="">Sélectionnez un rôle...</option>
+                                    <% roles.forEach(role => { %>
+                                        <option value="<%= role.id %>" <%= settings.tickets?.supportRoleId === role.id ? 'selected' : '' %>>@ <%= role.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Catégorie des tickets</label>
+                            <div class="relative">
+                                <select name="tickets_categoryId" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                    <option value="">Sélectionnez une catégorie...</option>
+                                    <% channels.filter(c => c.type === 4).forEach(cat => { %>
+                                        <option value="<%= cat.id %>" <%= settings.tickets?.ticketsCategory === cat.id ? 'selected' : '' %>>📁 <%= cat.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Préfixe des salons de ticket</label>
+                            <input type="text" name="tickets_ticketPrefix" value="<%= settings.tickets?.ticketPrefix || 'ticket' %>" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all placeholder-zinc-600">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Message de bienvenue (Tickets)</label>
+                            <textarea name="tickets_welcomeMessage" rows="2" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all resize-none" placeholder="Bienvenue dans votre ticket..."><%= settings.tickets?.welcomeMessage || '' %></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                    Enregistrer les rôles
+                </button>
+            </form>
+        <% } else if (tab === 'logs') { %>
+            <form action="/guilds/<%= guild.id %>/settings/logs" method="POST" class="max-w-4xl">
+                <div class="glass-card rounded-2xl p-6 mb-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i data-lucide="list-tree" class="w-5 h-5 text-indigo-400"></i>
+                                Serveur Logs
+                            </h2>
+                            <p class="text-sm text-zinc-400 mt-1">Gardez un œil sur l'activité du serveur.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="logs_enabled" class="sr-only peer" <%= settings.logs?.enabled ? 'checked' : '' %>>
+                            <div class="w-11 h-6 bg-zinc-800 border border-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-300 after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-500 peer-checked:border-indigo-500 peer-checked:after:bg-white"></div>
+                        </label>
+                    </div>
+
+                    <div class="max-w-md">
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon des logs principal</label>
+                        <div class="relative">
+                            <select name="logs_channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all appearance-none">
+                                <option value="">Aucun salon</option>
+                                <% channels.forEach(ch => { %>
+                                    <option value="<%= ch.id %>" <%= settings.logs?.channel === ch.id ? 'selected' : '' %>># <%= ch.name %></option>
+                                <% }) %>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-2xl p-6 mb-8">
+                    <h3 class="text-base font-medium text-white mb-4">Catégories à journaliser</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <%
+                            const logCats = settings.logs?.categories || {};
+                            const allCats = ['arrived', 'farewell', 'vocal', 'mod', 'automod', 'commands', 'roles', 'channels', 'economy', 'messages', 'invites'];
+                            allCats.forEach(cat => {
+                        %>
+                            <label class="flex items-center gap-3 p-3 rounded-xl border border-white/5 hover:bg-white/5 transition-colors cursor-pointer group">
+                                <input type="checkbox" name="log_<%= cat %>" class="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-zinc-900" <%= logCats[cat] ? 'checked' : '' %>>
+                                <span class="text-sm text-zinc-300 group-hover:text-white capitalize"><%= cat %></span>
+                            </label>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                    Enregistrer les logs
+                </button>
+            </form>
+        <% } else if (tab === 'embeds') { %>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-6xl">
+                <!-- Form -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2 mb-6">
+                        <i data-lucide="layout-template" class="w-5 h-5 text-indigo-400"></i>
+                        Créer un Embed
+                    </h2>
+                    <form action="/guilds/<%= guild.id %>/settings/embeds" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Salon de destination</label>
+                            <div class="relative">
+                                <select name="channel" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 appearance-none">
+                                    <% channels.forEach(ch => { %>
+                                        <option value="<%= ch.id %>"># <%= ch.name %></option>
+                                    <% }) %>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Titre</label>
+                            <input type="text" name="title" id="embedTitle" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="Mon super titre" oninput="updateEmbedPreview()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+                            <textarea name="description" id="embedDesc" rows="5" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 resize-none" placeholder="Le contenu de l'embed..." oninput="updateEmbedPreview()"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Couleur Hex</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="embedColorPicker" value="#6366f1" class="w-10 h-10 rounded cursor-pointer bg-transparent border-0" oninput="document.getElementById('embedColorText').value = this.value; updateEmbedPreview()">
+                                <input type="text" name="color" id="embedColorText" value="#6366f1" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" oninput="document.getElementById('embedColorPicker').value = this.value; updateEmbedPreview()">
+                            </div>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-indigo-500/20">
+                                Envoyer l'Embed
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview -->
+                <div class="glass-card rounded-2xl p-6 bg-zinc-900/50 flex flex-col items-center">
+                    <div class="w-full">
+                        <h3 class="text-xs font-semibold text-zinc-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            Aperçu Discord
+                        </h3>
+                        <div class="bg-[#36393f] rounded-lg flex w-full max-w-sm mx-auto shadow-2xl overflow-hidden border border-[#202225]">
+                            <div id="previewColorBar" class="w-1" style="background-color: #6366f1;"></div>
+                            <div class="p-4 flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-5 h-5 rounded-full bg-zinc-700 overflow-hidden">
+                                        <img src="<%= bot.user.displayAvatarURL() %>" alt="" class="w-full h-full object-cover">
+                                    </div>
+                                    <span class="text-xs font-semibold text-white"><%= bot.user.username %></span>
+                                    <span class="text-[10px] bg-indigo-500 text-white px-1 rounded uppercase tracking-wider font-semibold">Bot</span>
+                                </div>
+                                <h4 id="previewTitle" class="text-white font-semibold text-base mb-1">Mon super titre</h4>
+                                <p id="previewDesc" class="text-[#dcddde] text-sm whitespace-pre-wrap leading-relaxed">Le contenu de l'embed...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                function updateEmbedPreview() {
+                    const title = document.getElementById('embedTitle').value || 'Mon super titre';
+                    const desc = document.getElementById('embedDesc').value || 'Le contenu de l\'embed...';
+                    const color = document.getElementById('embedColorText').value || '#6366f1';
+
+                    document.getElementById('previewTitle').innerText = title;
+                    document.getElementById('previewDesc').innerText = desc;
+                    document.getElementById('previewColorBar').style.backgroundColor = color;
+                }
+            </script>
+        <% } else if (tab === 'moderation') { %>
+            <div class="glass-card rounded-2xl p-6 max-w-2xl">
+                <div>
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="gavel" class="w-5 h-5 text-indigo-400"></i>
+                        Actions Rapides
+                    </h2>
+                    <p class="text-sm text-zinc-400 mt-1">Effectuez des actions de modération directement depuis le dashboard.</p>
+                </div>
+
+                <form action="/guilds/<%= guild.id %>/settings/moderation" method="POST" class="mt-6 space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Membre ciblé</label>
+                        <div class="relative">
+                            <select name="userId" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 appearance-none">
+                                <option value="">Sélectionnez un membre...</option>
+                                <% members.slice(0, 100).forEach(member => { %>
+                                    <option value="<%= member.id %>"><%= member.tag %></option>
+                                <% }) %>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-400">
+                                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Action</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-zinc-900/50 cursor-pointer hover:bg-white/5 transition-colors">
+                                <input type="radio" name="action" value="warn" class="w-4 h-4 text-indigo-500 bg-zinc-900 border-white/10 focus:ring-indigo-500" checked>
+                                <span class="text-sm text-white">Avertir</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-zinc-900/50 cursor-pointer hover:bg-white/5 transition-colors">
+                                <input type="radio" name="action" value="kick" class="w-4 h-4 text-orange-500 bg-zinc-900 border-white/10 focus:ring-orange-500">
+                                <span class="text-sm text-white">Expulser</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-3 rounded-xl border border-white/5 bg-zinc-900/50 cursor-pointer hover:bg-white/5 transition-colors">
+                                <input type="radio" name="action" value="ban" class="w-4 h-4 text-red-500 bg-zinc-900 border-white/10 focus:ring-red-500">
+                                <span class="text-sm text-white">Bannir</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Raison (Optionnelle)</label>
+                        <input type="text" name="reason" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" placeholder="Ex: Spam dans le chat général">
+                    </div>
+
+                    <div class="pt-4 border-t border-white/10">
+                        <button type="submit" class="bg-red-500/90 hover:bg-red-600 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-red-500/20 flex items-center gap-2">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                            Exécuter l'action
+                        </button>
+                    </div>
+                </form>
+            </div>
+        <% } %>
+    </main>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>

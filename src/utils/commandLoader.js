@@ -52,6 +52,7 @@ function loadCommands(client, commandsPath, options = {}) {
       console.warn(
         `[WARN] Failed to load command(s) from ${filePath}: ${error.message}`,
       );
+      console.error(error.stack);
     }
   }
 

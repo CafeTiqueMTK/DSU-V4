@@ -5,6 +5,7 @@ const economyService = require("./modules/economy/EconomyService");
 const moderationService = require("./modules/moderation/ModerationService");
 const marriageService = require("./modules/marriage/MarriageService");
 const TicketService = require("./modules/tickets/TicketService");
+const { log } = require("./utils/logger");
 
 class Database {
   constructor() {
@@ -26,9 +27,9 @@ class Database {
       await mongoose.connect(config.mongoUri);
       this.isReady = true;
       await this.loadGuildSettingsCache();
-      console.log("Connected to MongoDB.");
+      log.success("Connected to MongoDB.");
     } catch (error) {
-      console.error("Could not connect to MongoDB:", error);
+      log.error("Could not connect to MongoDB:", error);
       throw error;
     }
   }
@@ -37,8 +38,9 @@ class Database {
     if (!this.isReady) return;
     await mongoose.disconnect();
     this.isReady = false;
-    console.log("Disconnected from MongoDB.");
+    log.info("Disconnected from MongoDB.");
   }
+
 
   // --- Guild Settings Logic (To be moved to a SettingsService later) ---
 
@@ -52,8 +54,10 @@ class Database {
           discordLink: { enabled: false },
           ghostPing: { enabled: false },
           spam: { enabled: false },
+          invisibleChars: { enabled: false },
         },
         blockedRoles: [],
+        safeChannels: [],
       },
       logs: {
         enabled: false,
@@ -73,7 +77,6 @@ class Database {
           bulkdelete: true,
           messages: true,
           invites: true,
-          gemini: true,
         },
       },
       level: {
@@ -93,13 +96,14 @@ class Database {
       autorole: { enabled: false, roleId: null },
       funny: {},
       antiBot: { enabled: false },
-      antiRaid: { enabled: false, threshold: 5 },
+      antiRaid: { enabled: false, threshold: 5, lockdown: false, active: false },
       antiMassMention: { enabled: false },
       antiSpam: { enabled: false },
       antiInvites: { enabled: false },
       antiLinks: { enabled: false },
       antiRoles: { enabled: false },
       antiKeywords: { enabled: false, keywords: [] },
+      antiNsfw: { enabled: false },
       tickets: {
         setup: false,
         supportRole: null,

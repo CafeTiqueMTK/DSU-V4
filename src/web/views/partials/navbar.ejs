@@ -1,0 +1,29 @@
+<nav class="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/5 h-16 flex items-center px-6 justify-between">
+    <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center">
+            <i data-lucide="bot" class="w-5 h-5 text-indigo-400"></i>
+        </div>
+        <a href="/" class="text-xl font-semibold tracking-tight text-white hover:text-indigo-400 transition-colors">DSU-V4</a>
+    </div>
+
+    <div class="flex items-center gap-6">
+        <div class="hidden md:flex items-center gap-4 text-sm font-medium text-zinc-400">
+            <a href="/" class="hover:text-white transition-colors">Accueil</a>
+            <a href="/guilds" class="hover:text-white transition-colors">Serveurs</a>
+        </div>
+
+        <% if (locals.bot && locals.bot.user) { %>
+            <div class="flex items-center gap-4 pl-4 border-l border-white/10">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden border border-white/10">
+                        <img src="<%= bot.user.displayAvatarURL() %>" alt="Bot Avatar" class="w-full h-full object-cover">
+                    </div>
+                    <span class="text-sm font-medium text-zinc-300 hidden sm:block"><%= bot.user.tag %></span>
+                </div>
+                <a href="/logout" class="text-zinc-500 hover:text-red-400 transition-colors" title="Déconnexion">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </a>
+            </div>
+        <% } %>
+    </div>
+</nav>
