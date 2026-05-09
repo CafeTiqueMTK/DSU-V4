@@ -18,23 +18,17 @@ module.exports = {
     // --- 1. Système de coins par message (Converted to UserData) ---
     try {
       if (guildSettings.level?.enabled) {
-        // We use UserData model via db.js instead of storing it in GuildSetting
-        const userData = await db.getUserData(userId);
+        const xpGain = 5;
+        const coinsGain = 10;
 
-        const oldCoins = userData.coins || 0;
-        const oldXp = userData.work?.xp || 0; // Using work object or adding xp to UserData
+        const userData = await db.updateLeveling(userId, xpGain, coinsGain);
 
-        const newCoins = oldCoins + 10;
-        const newXp = oldXp + 5;
+        const oldXp = (userData.work?.xp || 0) - xpGain;
+        const newXp = userData.work?.xp || 0;
 
         // Level up detection
         const oldLevel = Math.floor(oldXp / 100);
         const newLevel = Math.floor(newXp / 100);
-
-        await db.saveCoins(userId, newCoins);
-        // We might need to add XP to UserData schema if it's not there.
-        // For now let's just use what we have or add it.
-        // I will just update coins for now to avoid breaking schema.
 
         if (newLevel > oldLevel && guildSettings.level.message) {
           const levelChannel = guildSettings.level.channel
@@ -53,11 +47,15 @@ module.exports = {
 
     // --- 2. Automod ---
     if (guildSettings.automod?.enabled) {
-      if (guildSettings.automod.safeChannels?.includes(message.channel.id)) {
-        // Continue to funny responses but skip automod checks
-      } else {
+      const isSafeChannel = guildSettings.automod.safeChannels?.includes(message.channel.id);
+
+      if (!isSafeChannel) {
         const sendAutomodWarning = async (reason, violationType) => {
         if (!client.automodCooldown) client.automodCooldown = new Map();
+
+        // Memory Protection (Audit Fix)
+        if (client.automodCooldown.size > 1000) client.automodCooldown.clear();
+
         const cooldownKey = `${guildId}:${userId}:${violationType}`;
         const now = Date.now();
         if (now - (client.automodCooldown.get(cooldownKey) || 0) < 10000)
@@ -76,7 +74,21 @@ module.exports = {
           await message.author.send({ embeds: [dmEmbed] }).catch(() => {});
         } catch (e) {}
 
-        const logChannel = await getLogChannel(message.guild, "automod");
+        const actionChannelId = guildSettings.automod?.actionChannel;
+        let logChannel = null;
+        if (actionChannelId) {
+          logChannel = message.guild.channels.cache.get(actionChannelId);
+          // Quick permission check
+          const me = message.guild.members.me;
+          if (logChannel && !logChannel.permissionsFor(me)?.has(["ViewChannel", "SendMessages", "EmbedLinks"])) {
+            logChannel = null;
+          }
+        }
+
+        if (!logChannel) {
+          logChannel = await getLogChannel(message.guild, "automod");
+        }
+
         if (logChannel) {
           const logEmbed = createLogEmbed(
             "🚨 Automod Action",
@@ -112,6 +124,10 @@ module.exports = {
       // Anti Spam (Basic)
       if (guildSettings.antiSpam?.enabled) {
         if (!client.spamMap) client.spamMap = new Map();
+
+        // Memory Protection: Limit Map size (Audit Fix)
+        if (client.spamMap.size > 1000) client.spamMap.clear();
+
         const spamKey = `${guildId}:${userId}`;
         const times = client.spamMap.get(spamKey);
         if (!times) {
@@ -186,18 +202,15 @@ module.exports = {
       }
 
       // Anti NSFW (EN/FR)
-      if (guildSettings.antiNsfw?.enabled) {
-        const nsfwWords = client.banwords || [];
+      if (guildSettings.antiNsfw?.enabled && client.nsfwRegex) {
         const lowerContent = message.content.toLowerCase();
-        const foundNsfw = nsfwWords.find(word => {
-          const regex = new RegExp(`\\b${word}\\b`, 'i');
-          return regex.test(lowerContent);
-        });
+        const isNsfw = client.nsfwRegex.test(lowerContent);
 
-        if (foundNsfw) {
+        if (isNsfw) {
+          const matchedWord = message.content.match(client.nsfwRegex)?.[0] || "unknown";
           await message.delete().catch(() => {});
           return sendAutomodWarning(
-            `NSFW content detected: ${foundNsfw}`,
+            `NSFW content detected: ${matchedWord}`,
             "NSFW Filter"
           );
         }
@@ -227,6 +240,10 @@ module.exports = {
         const lower = message.content.toLowerCase();
         if (triggers.some((t) => lower.includes(t))) {
           if (!client.funnyCooldown) client.funnyCooldown = new Map();
+
+          // Memory Protection: Limit Map size (Audit Fix)
+          if (client.funnyCooldown.size > 1000) client.funnyCooldown.clear();
+
           const key = `${guildId}:${userId}:${type}`;
           const now = Date.now();
           if (now - (client.funnyCooldown.get(key) || 0) < 30000) return;

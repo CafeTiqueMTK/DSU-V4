@@ -73,6 +73,19 @@ class EconomyService {
       { upsert: true },
     );
   }
+
+  async updateLeveling(userId, xpGain, coinsGain) {
+    return UserData.findOneAndUpdate(
+      { userId },
+      {
+        $inc: {
+          "coins": coinsGain,
+          "work.xp": xpGain
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
 }
 
 module.exports = EconomyService;

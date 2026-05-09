@@ -1,36 +1,55 @@
 const mongoose = require("mongoose");
 const { config } = require("./utils/env.js");
 const GuildSetting = require("./models/GuildSetting.js");
-const economyService = require("./modules/economy/EconomyService");
-const moderationService = require("./modules/moderation/ModerationService");
-const marriageService = require("./modules/marriage/MarriageService");
-const TicketService = require("./modules/tickets/TicketService");
 const { log } = require("./utils/logger");
+const notify = require("./services/NotificationService");
 
 class Database {
   constructor() {
     this.isReady = false;
     this.guildSettingsCache = new Map();
     this.legacyStores = new Map();
+
+    // Instantiate services with 'this' reference to avoid circular requires
+    const EconomyService = require("./modules/economy/EconomyService");
+    const ModerationService = require("./modules/moderation/ModerationService");
+    const MarriageService = require("./modules/marriage/MarriageService");
+    const TicketService = require("./modules/tickets/TicketService");
+
+    this.economy = new EconomyService(this);
+    this.moderation = new ModerationService(this);
+    this.marriage = new MarriageService(this);
     this.tickets = new TicketService(this);
   }
 
   async init() {
     if (this.isReady) return;
     if (!config.mongoUri) {
-      console.error("MONGODB_URI is not defined in environment variables.");
-      throw new Error("MongoDB URI is required.");
+      log.error("MONGODB_URI is not defined in environment variables.");
+      if (config.production) throw new Error("MongoDB URI is required in production.");
+      log.warn("Running in DEV mode without database functionality.");
+      return;
     }
 
     try {
       mongoose.set("strictQuery", false);
-      await mongoose.connect(config.mongoUri);
+      // Add a connection timeout for faster startup in dev if DB is down
+      await mongoose.connect(config.mongoUri, {
+        serverSelectionTimeoutMS: config.production ? 30000 : 5000,
+      });
       this.isReady = true;
       await this.loadGuildSettingsCache();
       log.success("Connected to MongoDB.");
     } catch (error) {
-      log.error("Could not connect to MongoDB:", error);
-      throw error;
+      // Notify WhatsApp on DB failure
+      await notify.notifyDbFailure(error);
+
+      if (config.production) {
+        log.error("CRITICAL: Could not connect to MongoDB in production.", error);
+        throw error;
+      }
+      log.warn(`⚠️ Database connection failed: ${error.message}. Running in DEGRADED mode.`);
+      this.isReady = false;
     }
   }
 
@@ -186,12 +205,18 @@ class Database {
     let cursor = target;
     for (let index = 0; index < parts.length - 1; index += 1) {
       const part = parts[index];
+      // Prototype Pollution Protection (M-2 Fix)
+      if (part === "__proto__" || part === "constructor" || part === "prototype") continue;
+
       if (!cursor[part] || typeof cursor[part] !== "object") {
         cursor[part] = {};
       }
       cursor = cursor[part];
     }
-    cursor[parts[parts.length - 1]] = value;
+    const finalPart = parts[parts.length - 1];
+    if (finalPart !== "__proto__" && finalPart !== "constructor" && finalPart !== "prototype") {
+        cursor[finalPart] = value;
+    }
   }
 
   updateCachedGuildSettings(guildId, updates) {
@@ -216,51 +241,72 @@ class Database {
     );
   }
 
-  async getSettings(guildId) {
-    if (!this.isReady) throw new Error("Database not ready");
-    const settings = await GuildSetting.findOneAndUpdate(
-      { guildId },
-      { $setOnInsert: { guildId, ...this.getDefaultSettings() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
-    const normalized = this.normalizeSettings(settings);
-    this.guildSettingsCache.set(guildId, normalized);
-    this.rebuildLegacySettingsStore();
-    return normalized;
+  async getSettings(guildId, forceRefresh = false) {
+    // Optimization (High Severity Fix): Use cache if available unless refresh forced
+    if (!forceRefresh && this.guildSettingsCache.has(guildId)) {
+        return this.guildSettingsCache.get(guildId);
+    }
+
+    if (!this.isReady) {
+      return this.ensureCachedGuildSettings(guildId);
+    }
+
+    try {
+      const settings = await GuildSetting.findOneAndUpdate(
+        { guildId },
+        { $setOnInsert: { guildId, ...this.getDefaultSettings() } },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+      const normalized = this.normalizeSettings(settings);
+      this.guildSettingsCache.set(guildId, normalized);
+      this.rebuildLegacySettingsStore();
+      return normalized;
+    } catch (err) {
+      log.warn(`Failed to fetch settings from DB for ${guildId}: ${err.message}. Using cache.`);
+      return this.ensureCachedGuildSettings(guildId);
+    }
   }
 
   async updateSettings(guildId, data) {
-    if (!this.isReady) throw new Error("Database not ready");
     this.updateCachedGuildSettings(guildId, data);
-    return GuildSetting.updateOne(
-      { guildId },
-      { $set: data },
-      { upsert: true },
-    );
+    if (!this.isReady) return null;
+
+    try {
+        return await GuildSetting.updateOne(
+          { guildId },
+          { $set: data },
+          { upsert: true },
+        );
+    } catch (err) {
+        log.error(`Failed to persist settings for ${guildId}:`, err);
+        return null;
+    }
   }
 
   // --- Economy Delegation ---
-  async getUserData(userId) { return economyService.getUserData(userId); }
-  async getCoins(userId) { return economyService.getCoins(userId); }
-  async saveCoins(userId, amount) { return economyService.saveCoins(userId, amount); }
-  async addCoins(userId, amount) { return economyService.addCoins(userId, amount); }
-  async getTopUsers(limit = 10) { return economyService.getTopUsers(limit); }
-  async getWorkData(userId) { return economyService.getWorkData(userId); }
-  async saveWorkData(userId, workData) { return economyService.saveWorkData(userId, workData); }
-  async saveDailyData(userId, dailyData) { return economyService.saveDailyData(userId, dailyData); }
+  async getUserData(userId) { if (!this.isReady) return {}; return this.economy.getUserData(userId); }
+  async getCoins(userId) { if (!this.isReady) return 0; return this.economy.getCoins(userId); }
+  async saveCoins(userId, amount) { if (!this.isReady) return null; return this.economy.saveCoins(userId, amount); }
+  async saveXp(userId, xp) { if (!this.isReady) return null; return this.economy.saveXp(userId, xp); }
+  async addCoins(userId, amount) { if (!this.isReady) return 0; return this.economy.addCoins(userId, amount); }
+  async getTopUsers(limit = 10) { if (!this.isReady) return []; return this.economy.getTopUsers(limit); }
+  async getWorkData(userId) { if (!this.isReady) return {}; return this.economy.getWorkData(userId); }
+  async saveWorkData(userId, workData) { if (!this.isReady) return null; return this.economy.saveWorkData(userId, workData); }
+  async saveDailyData(userId, dailyData) { if (!this.isReady) return null; return this.economy.saveDailyData(userId, dailyData); }
+  async updateLeveling(userId, xpGain, coinsGain) { if (!this.isReady) return null; return this.economy.updateLeveling(userId, xpGain, coinsGain); }
 
   // --- Moderation Delegation ---
-  async getWarns(guildId, userId) { return moderationService.getWarns(guildId, userId); }
-  async addWarn(guildId, userId, moderatorId, reason) { return moderationService.addWarn(guildId, userId, moderatorId, reason); }
-  async clearWarns(guildId, userId) { return moderationService.clearWarns(guildId, userId); }
-  async setUserFrozen(userId, frozen) { return moderationService.setUserFrozen(userId, frozen); }
-  async logModAction(guild, userTag, action, reason, moderator, extra = []) { return moderationService.logModAction(guild, userTag, action, reason, moderator, extra); }
+  async getWarns(guildId, userId) { if (!this.isReady) return []; return this.moderation.getWarns(guildId, userId); }
+  async addWarn(guildId, userId, moderatorId, reason) { if (!this.isReady) return null; return this.moderation.addWarn(guildId, userId, moderatorId, reason); }
+  async clearWarns(guildId, userId) { if (!this.isReady) return null; return this.moderation.clearWarns(guildId, userId); }
+  async setUserFrozen(userId, frozen) { if (!this.isReady) return null; return this.moderation.setUserFrozen(userId, frozen); }
+  async logModAction(guild, userTag, action, reason, moderator, extra = []) { if (!this.isReady) return null; return this.moderation.logModAction(guild, userTag, action, reason, moderator, extra); }
 
   // --- Marriage Delegation ---
-  async getMarriage(userId) { return marriageService.getMarriage(userId); }
-  async createMarriage(user1Id, user2Id, proposerId, guildId) { return marriageService.createMarriage(user1Id, user2Id, proposerId, guildId); }
-  async divorce(userId) { return marriageService.divorce(userId); }
-  async getMarriageStats() { return marriageService.getMarriageStats(); }
+  async getMarriage(userId) { if (!this.isReady) return null; return this.marriage.getMarriage(userId); }
+  async createMarriage(user1Id, user2Id, proposerId, guildId) { if (!this.isReady) return null; return this.marriage.createMarriage(user1Id, user2Id, proposerId, guildId); }
+  async divorce(userId) { if (!this.isReady) return null; return this.marriage.divorce(userId); }
+  async getMarriageStats() { if (!this.isReady) return []; return this.marriage.getMarriageStats(); }
 
   // --- Ticket Delegation ---
   async getTicketsConfig() { return this.tickets.getTicketsConfig(); }
