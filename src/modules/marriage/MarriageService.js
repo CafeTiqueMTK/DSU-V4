@@ -1,6 +1,10 @@
 const Marriage = require("../../models/Marriage");
 
 class MarriageService {
+  constructor(db) {
+    this.db = db;
+  }
+
   async getMarriage(userId) {
     return Marriage.findOne({
       $or: [{ user1Id: userId }, { user2Id: userId }],
@@ -26,4 +30,4 @@ class MarriageService {
   }
 }
 
-module.exports = new MarriageService();
+module.exports = MarriageService;

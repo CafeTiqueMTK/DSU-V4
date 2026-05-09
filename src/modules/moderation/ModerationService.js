@@ -3,12 +3,16 @@ const UserData = require("../../models/UserData");
 const { Colors, Emojis } = require("../../utils/embeds");
 
 class ModerationService {
+  constructor(db) {
+    this.db = db;
+  }
+
   async getWarns(guildId, userId) {
-    const data = await UserData.findOneAndUpdate(
+    const data = await UserData.findOne(
       { userId },
-      { $setOnInsert: { userId } },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
+      { warns: 1 }
+    ).lean();
+    if (!data || !data.warns) return [];
     return data.warns.filter((warning) => warning.guildId === guildId);
   }
 
@@ -17,7 +21,10 @@ class ModerationService {
       { userId },
       {
         $push: {
-          warns: { guildId, moderatorId, reason, timestamp: new Date() },
+          warns: {
+            $each: [{ guildId, moderatorId, reason, timestamp: new Date() }],
+            $slice: -200 // Keep last 200 warns across all guilds (Safety fix)
+          },
         },
       },
       { upsert: true, new: true },
@@ -37,8 +44,7 @@ class ModerationService {
   }
 
   async logModAction(guild, userTag, action, reason, moderator, extra = []) {
-    const db = require("../../db");
-    const settings = await db.getSettings(guild.id);
+    const settings = await this.db.getSettings(guild.id);
     const conf = settings.logs;
 
     if (conf?.enabled && conf.channel) {
@@ -63,4 +69,4 @@ class ModerationService {
   }
 }
 
-module.exports = new ModerationService();
+module.exports = ModerationService;

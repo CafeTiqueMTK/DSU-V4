@@ -1,6 +1,10 @@
 const UserData = require("../../models/UserData");
 
 class EconomyService {
+  constructor(db) {
+    this.db = db;
+  }
+
   async getUserData(userId) {
     return UserData.findOneAndUpdate(
       { userId },
@@ -10,8 +14,8 @@ class EconomyService {
   }
 
   async getCoins(userId) {
-    const data = await this.getUserData(userId);
-    return data.coins;
+    const data = await UserData.findOne({ userId }, { coins: 1 }).lean();
+    return data?.coins || 0;
   }
 
   async saveCoins(userId, amount) {
@@ -22,29 +26,36 @@ class EconomyService {
     );
   }
 
+  async saveXp(userId, xp) {
+    return UserData.updateOne(
+      { userId },
+      { $set: { "work.xp": Math.max(0, xp) } },
+      { upsert: true }
+    );
+  }
+
   async addCoins(userId, amount) {
+    // Atomic update with floor to 0 using aggregation pipeline (High Severity Fix)
     const result = await UserData.findOneAndUpdate(
       { userId },
-      { $inc: { coins: amount } },
+      [
+        { $set: { coins: { $max: [{ $add: [{ $ifNull: ["$coins", 0] }, amount] }, 0] } } }
+      ],
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
-    if (result.coins < 0) {
-      result.coins = 0;
-      await result.save();
-    }
     return result.coins;
   }
 
   async getTopUsers(limit = 10) {
-    return UserData.find({ coins: { $gt: 0 } })
+    return UserData.find({ coins: { $gt: 0 } }, { userId: 1, coins: 1 })
       .sort({ coins: -1 })
       .limit(limit)
       .lean();
   }
 
   async getWorkData(userId) {
-    const data = await this.getUserData(userId);
-    return data.work;
+    const data = await UserData.findOne({ userId }, { work: 1 }).lean();
+    return data?.work || {};
   }
 
   async saveWorkData(userId, workData) {
@@ -64,4 +75,4 @@ class EconomyService {
   }
 }
 
-module.exports = new EconomyService();
+module.exports = EconomyService;
