@@ -7,156 +7,131 @@ const {
 } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
-const { Colors, Emojis, createBaseEmbed, createLogEmbed, success, error } = require("../utils/embeds");
+const { Colors, Emojis, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
+const notify = require("../services/NotificationService");
 
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction) {
     const client = interaction.client;
 
+    // Crash Mode Simulation (Audit/CrashMode Fix)
+    if (process.env.CRASH_MODE === "true" && interaction.isChatInputCommand()) {
+        const shouldCrash = Math.random() < 0.3; // 30% chance to crash
+        if (shouldCrash) {
+            throw new Error("CRASH_MODE: Simulated internal script failure for testing stability.");
+        }
+    }
+
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
-      if (!command) return;
+
+      // Handle "Module Down" - Command is registered in Discord but failed to load in bot
+      if (!command) {
+        console.error(`[CRITICAL] Command /${interaction.commandName} was invoked but is not loaded.`);
+
+        // Notify WhatsApp on component failure
+        await notify.notifyComponentFailure(`/${interaction.commandName}`, new Error("Command script not loaded or corrupted"));
+
+        const failEmbed = botFailure("Module Offline", `The script for \`/${interaction.commandName}\` is corrupted or failed to load. The Core remains intact.`);
+
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ embeds: [failEmbed] }).catch(() => {});
+        } else {
+            await interaction.reply({ embeds: [failEmbed], flags: 64 }).catch(() => {});
+        }
+        return;
+      }
+
+      // Handle Database Dependency
+      if (command.requiresDb && !db.isReady) {
+        const { dbOffline } = require("../utils/embeds");
+        const embed = dbOffline(interaction.user, interaction.commandName);
+        return await interaction.reply({ embeds: [embed], flags: 64 });
+      }
 
       try {
         await command.execute(interaction);
+// ... rest of the file
 
         // Log command execution (async)
-        const logChannel = await getLogChannel(interaction.guild, "commands");
-        if (logChannel) {
-          const embed = createLogEmbed(
-            "Command Executed",
-            null,
-            Colors.SUCCESS,
-            [
-              {
-                name: "Command",
-                value: `\`/${interaction.commandName}\``,
-                inline: true,
-              },
-              { name: "User", value: `**${interaction.user.tag}**`, inline: true },
-              {
-                name: "Channel",
-                value: `<#${interaction.channel.id}>`,
-                inline: true,
-              },
-            ],
-            "ℹ️ Command Logger"
-          );
-          await logChannel.send({ embeds: [embed] }).catch(() => {});
-        }
+        // ... (rest of the log logic)
+
+        // Log command execution (async)
+        getLogChannel(interaction.guild, "commands").then(logChannel => {
+          if (logChannel) {
+            const embed = createLogEmbed(
+              "Command Executed",
+              null,
+              Colors.SUCCESS,
+              [
+                {
+                  name: "Command",
+                  value: `\`/${interaction.commandName}\``,
+                  inline: true,
+                },
+                { name: "User", value: `**${interaction.user.tag}**`, inline: true },
+                {
+                  name: "Channel",
+                  value: `<#${interaction.channel.id}>`,
+                  inline: true,
+                },
+              ],
+              "ℹ️ Command Logger"
+            );
+            logChannel.send({ embeds: [embed] }).catch(() => {});
+          }
+        }).catch(() => {});
       } catch (err) {
         console.error(`Error executing ${interaction.commandName}:`, err);
-        const errEmbed = error(interaction.user, "An unexpected error occurred while executing this command.", "Error", "🤖 Command Execution");
+
+        // Notify WhatsApp on execution crash
+        await notify.notifyComponentFailure(`/${interaction.commandName}`, err);
+
+        const failEmbed = botFailure("Execution Crash", `An unexpected error occurred in \`/${interaction.commandName}\` script.\n\n**Error:** \`${err.message}\``);
+
         if (interaction.deferred || interaction.replied) {
-          await interaction.editReply({ embeds: [errEmbed] }).catch(() => {});
+          await interaction.editReply({ embeds: [failEmbed] }).catch(() => {});
         } else {
-          await interaction.reply({ embeds: [errEmbed], flags: 64 }).catch(() => {});
+          await interaction.reply({ embeds: [failEmbed], flags: 64 }).catch(() => {});
         }
       }
+    }
+
+    // Handle Context Menus (H-3 Fix)
+    else if (interaction.isUserContextMenuCommand() || interaction.isMessageContextMenuCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) return;
+        try {
+            await command.execute(interaction);
+        } catch (err) {
+            console.error(`Error executing context menu ${interaction.commandName}:`, err);
+            const failEmbed = botFailure("Context Menu Crash", `Error: ${err.message}`);
+            if (interaction.deferred || interaction.replied) await interaction.editReply({ embeds: [failEmbed] }).catch(() => {});
+            else await interaction.reply({ embeds: [failEmbed], flags: 64 }).catch(() => {});
+        }
+    }
+
+    // Handle Autocomplete (H-3 Fix)
+    else if (interaction.isAutocomplete()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command || !command.autocomplete) return;
+        try {
+            await command.autocomplete(interaction);
+        } catch (err) {
+            console.error(`Autocomplete error for ${interaction.commandName}:`, err);
+        }
     }
 
     // Handle Button Interactions
     else if (interaction.isButton()) {
       const { customId, guild, user } = interaction;
 
-      // --- Ticket System ---
-      if (customId === "create_ticket" || customId === "close_ticket") {
-        const settings = await db.getSettings(guild.id);
-        const guildConfig = settings.tickets.toObject
-          ? settings.tickets.toObject()
-          : settings.tickets;
-
-        if (!guildConfig || !guildConfig.setup)
-          return interaction.reply({
-            embeds: [error(user, "The ticket system is not yet configured for this server.", "Error", "🎫 Ticket System")],
-            flags: 64,
-          });
-
-        if (customId === "create_ticket") {
-          await interaction.deferReply({ ephemeral: true });
-          const activeTickets = guildConfig.activeTickets || {};
-          if (Object.values(activeTickets).some((t) => t.userId === user.id)) {
-            return interaction.editReply({
-              embeds: [error(user, "You already have an open ticket. Please close it before opening a new one.", "Error", "🎫 Ticket System")],
-            });
-          }
-
-          const category = guild.channels.cache.get(
-            guildConfig.ticketsCategory,
-          );
-          if (!category)
-            return interaction.editReply({
-              embeds: [error(user, "Ticket category not found. Please contact an administrator.", "Error", "🎫 Ticket System")],
-            });
-
-          const channel = await guild.channels.create({
-            name: `${guildConfig.ticketPrefix || "ticket"}-${user.username}`,
-            type: 0,
-            parent: category.id,
-            permissionOverwrites: [
-              { id: guild.id, deny: ["ViewChannel"] },
-              {
-                id: user.id,
-                allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"],
-              },
-              {
-                id: guildConfig.supportRole,
-                allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"],
-              },
-            ],
-          });
-
-          const ticketId = channel.id;
-          const newActiveTicket = {
-            channelId: channel.id,
-            userId: user.id,
-            createdAt: Date.now(),
-            ticketName: `${guildConfig.ticketPrefix || "ticket"}-${user.username}`,
-          };
-
-          await db.updateSettings(guild.id, {
-            [`tickets.activeTickets.${ticketId}`]: newActiveTicket,
-          });
-
-          const embed = createBaseEmbed(user, {
-            title: "🎫 Support Ticket",
-            description: guildConfig.welcomeMessage || "Welcome! A member of the support team will be with you shortly. Please describe your issue in detail.",
-            color: Colors.SUCCESS,
-          });
-
-          const closeBtn = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId("close_ticket")
-              .setLabel("Close Ticket")
-              .setStyle(ButtonStyle.Danger)
-              .setEmoji("🔒"),
-          );
-          await channel.send({ content: `${user} | <@&${guildConfig.supportRole}>`, embeds: [embed], components: [closeBtn] });
-          await interaction.editReply({
-            embeds: [success(user, `Your ticket has been created: ${channel}`, "Ticket Created", "🎫 Ticket System")],
-          });
-        } else if (customId === "close_ticket") {
-          await interaction.deferReply({ ephemeral: true });
-          const activeTickets = guildConfig.activeTickets || {};
-          const ticketId = Object.keys(activeTickets).find(
-            (id) => activeTickets[id].channelId === interaction.channel.id,
-          );
-          if (!ticketId)
-            return interaction.editReply({
-              embeds: [error(user, "Ticket data not found in database.", "Error", "🎫 Ticket System")],
-            });
-
-          await interaction.editReply({ embeds: [success(user, "This ticket will be closed and deleted in **5 seconds**.", "Closing Ticket", "🎫 Ticket System")] });
-          setTimeout(async () => {
-            await interaction.channel.delete().catch(() => {});
-            const GuildSetting = require("../models/GuildSetting.js");
-            await GuildSetting.updateOne(
-              { guildId: guild.id },
-              { $unset: { [`tickets.activeTickets.${ticketId}`]: "" } },
-            );
-          }, 5000);
-        }
+      // --- Ticket System (Refactored) ---
+      if (customId === "create_ticket") {
+        return await db.tickets.createTicket(interaction);
+      } else if (customId === "close_ticket") {
+        return await db.tickets.closeTicket(interaction);
       }
 
       // --- Reaction Roles ---
@@ -190,11 +165,109 @@ module.exports = {
           });
         }
       }
+
+      // --- Interactive Dashboard (Refactored) ---
+      else if (customId.startsWith("dash_")) {
+        // DB Readiness Check for Dashboard
+        if (!db.isReady) {
+            const { dbOffline } = require("../utils/embeds");
+            return await interaction.reply({ embeds: [dbOffline(user, "Dashboard")], flags: 64 });
+        }
+
+        const dashManager = require("../utils/dashboardManager");
+        const guildId = interaction.guild.id;
+
+        // Navigation
+        if (customId === "dash_main") {
+            const ui = await dashManager.getMainMenu(user, guildId);
+            return await interaction.update(ui);
+        }
+        if (customId === "dash_menu_mod") {
+            const ui = await dashManager.getModMenu(user, guildId);
+            return await interaction.update(ui);
+        }
+        if (customId === "dash_menu_gen") {
+            const ui = await dashManager.getGeneralMenu(user, guildId, client);
+            return await interaction.update(ui);
+        }
+        if (customId === "dash_menu_eco") {
+            const ui = await dashManager.getEcoMenu(user, guildId);
+            return await interaction.update(ui);
+        }
+        if (customId === "dash_menu_tickets") {
+            const ui = await dashManager.getTicketsMenu(user, guildId);
+            return await interaction.update(ui);
+        }
+        if (customId === "dash_close") {
+            return await interaction.message.delete().catch(() => {});
+        }
+
+        // Toggles
+        const settings = await db.getSettings(guildId);
+        let updates = {};
+
+        if (customId === "dash_toggle_automod") updates = { "automod.enabled": !settings.automod?.enabled };
+        else if (customId === "dash_toggle_logs") updates = { "logs.enabled": !settings.logs?.enabled };
+        else if (customId === "dash_toggle_antispam") updates = { "antiSpam.enabled": !settings.antiSpam?.enabled };
+        else if (customId === "dash_toggle_antiraid") updates = { "antiRaid.enabled": !settings.antiRaid?.enabled };
+        else if (customId === "dash_toggle_antilinks") updates = { "antiLinks.enabled": !settings.antiLinks?.enabled };
+        else if (customId === "dash_toggle_economy") updates = { "streak.enabled": !settings.streak?.enabled };
+        else if (customId === "dash_toggle_levels") updates = { "level.enabled": !settings.level?.enabled };
+        else if (customId === "dash_toggle_welcome") updates = { "welcome.enabled": !settings.welcome?.enabled };
+        else if (customId === "dash_toggle_farewell") updates = { "farewell.enabled": !settings.farewell?.enabled };
+
+        if (Object.keys(updates).length > 0) {
+            await db.updateSettings(guildId, updates);
+            // Refresh current view
+            let ui;
+            if (customId.includes("eco") || customId.includes("levels")) ui = await dashManager.getEcoMenu(user, guildId);
+            else if (customId.includes("mod") || customId.includes("logs") || customId.includes("anti")) ui = await dashManager.getModMenu(user, guildId);
+            else if (customId.includes("welcome") || customId.includes("farewell")) ui = await dashManager.getGeneralMenu(user, guildId, client);
+            else ui = await dashManager.getMainMenu(user, guildId);
+
+            return await interaction.update(ui);
+        }
+      }
+    }
+
+    // Handle Select Menus
+    else if (interaction.isStringSelectMenu()) {
+        const { customId, guild, user, values } = interaction;
+
+        if (customId.startsWith("dash_select_")) {
+            // DB Readiness Check
+            if (!db.isReady) {
+                const { dbOffline } = require("../utils/embeds");
+                return await interaction.reply({ embeds: [dbOffline(user, "Dashboard")], flags: 64 });
+            }
+
+            const dashManager = require("../utils/dashboardManager");
+            const guildId = guild.id;
+            let updates = {};
+
+            if (customId === "dash_select_welcome_channel") {
+                updates = { "welcome.channel": values[0] };
+            }
+
+            if (Object.keys(updates).length > 0) {
+                await db.updateSettings(guildId, updates);
+                const ui = await dashManager.getGeneralMenu(user, guildId, client);
+                return await interaction.update(ui);
+            }
+        }
     }
 
     // Handle Modal Submissions
     else if (interaction.isModalSubmit()) {
       if (interaction.customId.startsWith("embedModal:")) {
+        // H-1: Permission Check
+        if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
+          return interaction.reply({
+            embeds: [error(interaction.user, "You lack permissions to send embeds via this system.", "Permission Denied", "🛡️ Security System")],
+            flags: 64
+          });
+        }
+
         const channelId = interaction.customId.split(":")[1];
         const channel = interaction.guild.channels.cache.get(channelId);
         const title = interaction.fields.getTextInputValue("title");
