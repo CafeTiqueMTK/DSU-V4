@@ -180,22 +180,17 @@ class Database {
     for (const entry of settings) {
       this.guildSettingsCache.set(entry.guildId, this.normalizeSettings(entry));
     }
-    this.rebuildLegacySettingsStore();
   }
 
   rebuildLegacySettingsStore() {
-    const settingsStore = {};
-    for (const [guildId, settings] of this.guildSettingsCache.entries()) {
-      settingsStore[guildId] = settings;
-    }
-    this.legacyStores.set("settings.json", settingsStore);
+    // Deprecated: No longer copying full cache to legacyStores for performance.
+    // legacyStores.set("settings.json") is now handled on-demand if needed.
   }
 
   ensureCachedGuildSettings(guildId) {
     if (!this.guildSettingsCache.has(guildId)) {
       const settings = { guildId, ...this.getDefaultSettings() };
       this.guildSettingsCache.set(guildId, settings);
-      this.rebuildLegacySettingsStore();
     }
     return this.guildSettingsCache.get(guildId);
   }
@@ -225,13 +220,11 @@ class Database {
       if (key.includes(".")) this.applyDotPath(cached, key, value);
       else cached[key] = value;
     }
-    this.rebuildLegacySettingsStore();
   }
 
   async persistGuildSettings(guildId, settings) {
     const normalized = this.normalizeSettings({ guildId, ...settings });
     this.guildSettingsCache.set(guildId, normalized);
-    this.rebuildLegacySettingsStore();
 
     if (!this.isReady) return null;
     return GuildSetting.updateOne(
@@ -259,7 +252,6 @@ class Database {
       );
       const normalized = this.normalizeSettings(settings);
       this.guildSettingsCache.set(guildId, normalized);
-      this.rebuildLegacySettingsStore();
       return normalized;
     } catch (err) {
       log.warn(`Failed to fetch settings from DB for ${guildId}: ${err.message}. Using cache.`);
@@ -295,6 +287,14 @@ class Database {
   async saveDailyData(userId, dailyData) { if (!this.isReady) return null; return this.economy.saveDailyData(userId, dailyData); }
   async updateLeveling(userId, xpGain, coinsGain) { if (!this.isReady) return null; return this.economy.updateLeveling(userId, xpGain, coinsGain); }
 
+  // --- Cache Management ---
+  evictGuild(guildId) {
+    if (this.guildSettingsCache.has(guildId)) {
+      this.guildSettingsCache.delete(guildId);
+      log.info(`Evicted guild ${guildId} from cache.`);
+    }
+  }
+
   // --- Moderation Delegation ---
   async getWarns(guildId, userId) { if (!this.isReady) return []; return this.moderation.getWarns(guildId, userId); }
   async addWarn(guildId, userId, moderatorId, reason) { if (!this.isReady) return null; return this.moderation.addWarn(guildId, userId, moderatorId, reason); }
@@ -321,6 +321,16 @@ class Database {
       }
       return updates;
     }
+
+    // Lazy legacy store for settings.json (High Severity Fix: Avoid O(n) copy on every write)
+    if (key === "settings.json") {
+      const settingsStore = {};
+      for (const [guildId, settings] of this.guildSettingsCache.entries()) {
+        settingsStore[guildId] = settings;
+      }
+      return settingsStore;
+    }
+
     return this.legacyStores.get(key) || {};
   }
 
