@@ -58,7 +58,7 @@ const guildSettingsSchema = new Schema(
       announcementChannel: { type: String, default: null },
     },
   },
-  { timestamps: true, minimize: false, strict: false },
+  { timestamps: true, minimize: false, strict: true },
 );
 
 module.exports = model("GuildSetting", guildSettingsSchema);

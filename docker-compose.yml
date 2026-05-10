@@ -21,6 +21,8 @@ services:
     image: mongo:latest
     container_name: dsu-mongodb
     restart: always
+    ports:
+      - "27017:27017"
     volumes:
       - dsu_mongo_data:/data/db
 

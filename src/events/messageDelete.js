@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require("discord.js");
+const { Events } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
 const { createLogEmbed, Colors } = require("../utils/embeds");
@@ -42,7 +42,9 @@ module.exports = {
               "🚨 Automod System"
             );
             await message.author.send({ embeds: [dmEmbed] }).catch(() => {});
-          } catch {}
+          } catch {
+            // Ignore DM errors
+          }
 
           const actionChannelId = guildSettings.actionChannel;
           if (actionChannelId) {
@@ -126,6 +128,8 @@ module.exports = {
 
         await logChannel.send({ embeds: [embed] });
       }
-    } catch (error) {}
+    } catch (error) {
+      // Ignore logging errors
+    }
   },
 };

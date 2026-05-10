@@ -282,8 +282,8 @@
                         .replace(/{server}/g, `**${serverName}**`)
                         .replace(/{memberCount}/g, `**1,337**`);
 
-                    document.getElementById('welcomePreview').innerHTML = format(wMsg).replace(/\n/g, '<br>');
-                    document.getElementById('farewellPreview').innerHTML = format(fMsg).replace(/\n/g, '<br>');
+                    document.getElementById('welcomePreview').textContent = format(wMsg);
+                    document.getElementById('farewellPreview').textContent = format(fMsg);
                 }
                 updateWelcomePreview();
             </script>
@@ -801,6 +801,6 @@
         <% } %>
     </main>
 
-    <script>lucide.createIcons();</script>
+    <%- include('partials/scripts') %>
 </body>
 </html>

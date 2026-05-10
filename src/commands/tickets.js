@@ -5,10 +5,10 @@ const {
   ButtonStyle,
   PermissionFlagsBits,
 } = require("discord.js");
-const db = require("../db.js");
-const { createBaseEmbed, success, Emojis, Colors } = require("../utils/embeds");
+const { createBaseEmbed, success, Colors } = require("../utils/embeds");
 
 module.exports = {
+  requiresDb: true,
   data: new SlashCommandBuilder()
     .setName("ticket")
     .setDescription("Ticket system")

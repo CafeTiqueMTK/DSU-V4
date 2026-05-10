@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require("discord.js");
+const { Events } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
 const { Colors, Emojis, createBaseEmbed } = require("../utils/embeds");

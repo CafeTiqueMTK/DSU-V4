@@ -7,6 +7,7 @@ const {
 const db = require("../db.js");
 
 module.exports = {
+  requiresDb: true,
   data: new SlashCommandBuilder()
     .setName("config")
     .setDescription("Configure all bot settings for the server.")

@@ -4,11 +4,12 @@ const {
   ChannelType,
 } = require("discord.js");
 const db = require("../db.js");
-const { createBaseEmbed, success, error, Emojis, Colors } = require("../utils/embeds.js");
+const { success, error } = require("../utils/embeds.js");
 
 module.exports = [
   // --- MAIN MOD COMMAND (ban, kick, warn, mute) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("mod")
       .setDescription("Moderation commands (ban, kick, warn, mute)")
@@ -175,6 +176,7 @@ module.exports = [
 
   // --- UNBAN ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("unban")
       .setDescription("Unban a user by their ID")
@@ -364,6 +366,7 @@ module.exports = [
 
   // --- CLEARWARN ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("clearwarn")
       .setDescription("Delete all warnings for a user")

@@ -1,11 +1,10 @@
 const {
   SlashCommandBuilder,
+  PermissionFlagsBits,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  PermissionFlagsBits,
 } = require("discord.js");
-const db = require("../db.js");
 const { createBaseEmbed, success, Colors } = require("../utils/embeds");
 
 module.exports = {

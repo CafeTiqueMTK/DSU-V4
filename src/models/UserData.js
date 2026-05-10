@@ -27,7 +27,7 @@ const userDataSchema = new Schema(
       },
     ],
   },
-  { timestamps: true },
+  { timestamps: true, strict: true },
 );
 
 module.exports = model("UserData", userDataSchema);

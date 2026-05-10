@@ -79,6 +79,12 @@ const config = {
   get githubToken() {
     return process.env.GITHUB_TOKEN;
   },
+  get whatsappPhone() {
+    return process.env.WHATSAPP_PHONE;
+  },
+  get whatsappApiKey() {
+    return process.env.WHATSAPP_API_KEY;
+  },
 };
 
 module.exports = { validateEnv, config };

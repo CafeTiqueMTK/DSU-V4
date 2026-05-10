@@ -19,6 +19,7 @@ class Bot extends Client {
       intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildVoiceStates,
         GatewayIntentBits.DirectMessages,
         GatewayIntentBits.MessageContent,
@@ -29,17 +30,24 @@ class Bot extends Client {
     this.updateChecker = new UpdateChecker(this);
     this.dashboard = new WebDashboard(this);
 
-    // Load banwords
+    // Load and compile banwords
     try {
       const banwordPath = path.join(process.cwd(), "banword.json");
       if (fs.existsSync(banwordPath)) {
         this.banwords = JSON.parse(fs.readFileSync(banwordPath, "utf-8"));
+        // Pre-compile regex for performance and escape special characters
+        if (this.banwords.length > 0) {
+          const escapedWords = this.banwords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+          this.nsfwRegex = new RegExp(`\\b(${escapedWords.join('|')})\\b`, 'i');
+        }
       } else {
         this.banwords = [];
+        this.nsfwRegex = null;
       }
     } catch (err) {
       console.error("Failed to load banword.json:", err);
       this.banwords = [];
+      this.nsfwRegex = null;
     }
   }
 
@@ -83,7 +91,12 @@ class Bot extends Client {
     try {
       await this.login(config.token);
     } catch (err) {
-      console.error("Failed to login to Discord:", err);
+      if (err.message.includes("disallowed intents")) {
+        console.error("\x1b[31m[CRITICAL] Failed to login: Disallowed Intents.\x1b[0m");
+        console.error("\x1b[33mPlease ensure 'MESSAGE CONTENT INTENT' and 'SERVER MEMBERS INTENT' are enabled in the Discord Developer Portal.\x1b[0m");
+      } else {
+        console.error("Failed to login to Discord:", err);
+      }
       process.exit(1);
     }
   }
@@ -142,14 +155,6 @@ class Bot extends Client {
 
     process.on("SIGINT", () => shutdown("SIGINT"));
     process.on("SIGTERM", () => shutdown("SIGTERM"));
-
-    process.on("uncaughtException", (err) => {
-      console.error("Uncaught Exception:", err);
-    });
-
-    process.on("unhandledRejection", (reason) => {
-      console.error("Unhandled Rejection:", reason);
-    });
   }
 }
 

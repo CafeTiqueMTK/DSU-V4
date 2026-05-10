@@ -2,7 +2,6 @@ const db = require("../db.js");
 
 function getGuildData(guildId, dataType = "settings") {
   const guildIdStr = guildId.toString();
-
   if (dataType === "settings") {
     return db.legacyStores.get("settings.json") || {};
   }
@@ -15,8 +14,6 @@ function getGuildData(guildId, dataType = "settings") {
 }
 
 function saveGuildData(guildId, data, dataType = "settings") {
-  const guildIdStr = guildId.toString();
-
   if (dataType === "settings") {
     db.legacyStores.set("settings.json", data);
     // Trigger persistence for each guild in the data if needed,

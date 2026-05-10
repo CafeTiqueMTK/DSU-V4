@@ -25,6 +25,12 @@ function loadCommands(client, commandsPath, options = {}) {
   const commandsArray = [];
 
   for (const filePath of commandFiles) {
+    // Simulated Load Failure (Audit/CrashMode Fix)
+    if (process.env.CRASH_MODE === "true" && filePath.includes("fun.js")) {
+        console.warn(`[CRASH-MODE] Intentionally skipping load for: ${filePath}`);
+        continue;
+    }
+
     try {
       if (clearCache) delete require.cache[require.resolve(filePath)];
       const exported = require(filePath);

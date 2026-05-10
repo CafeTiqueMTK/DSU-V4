@@ -129,6 +129,31 @@ function createLogEmbed(title, description, color = Colors.INFO, fields = [], mo
   return embed;
 }
 
+/**
+ * Creates a critical bot failure embed (Bright Red).
+ * M-3 Fix: Do not leak raw error messages to users.
+ */
+function botFailure(errorType) {
+  return new EmbedBuilder()
+    .setTitle("⚠️ PARTIAL FAILURE")
+    .setDescription(`**Warning:** ${errorType}\n\nThis specific module is currently unavailable, but the core system remains operational. The administrator has been notified.`)
+    .setColor(0xe67e22) // ORANGE (Partial failure is less severe than total)
+    .addFields({ name: "🛡️ Stability System", value: "The Core remains active. Only this module is affected." })
+    .setTimestamp();
+}
+
+/**
+ * Creates a database offline warning embed (Orange).
+ */
+function dbOffline(user, featureName) {
+  return createBaseEmbed(user, {
+    title: "📴 Database Offline",
+    description: `The **${featureName}** feature is currently unavailable because the database is offline.\n\nResults cannot be saved or retrieved at this time.`,
+    color: 0xe67e22, // ORANGE
+    module: "⚙️ System Degradation"
+  });
+}
+
 module.exports = {
   Colors,
   Emojis,
@@ -137,5 +162,7 @@ module.exports = {
   success,
   error,
   info,
+  botFailure,
+  dbOffline,
 };
 

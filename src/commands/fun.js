@@ -5,7 +5,6 @@ const {
   ButtonStyle,
   PermissionFlagsBits,
 } = require("discord.js");
-const db = require("../db.js");
 const fetch = require("node-fetch");
 const { getGuildData, saveGuildData } = require("../utils/guildManager");
 const { createBaseEmbed, Emojis, Colors } = require("../utils/embeds");
@@ -213,6 +212,7 @@ module.exports = [
 
   // --- FUNNYMSG (Config) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("funnymsg")
       .setDescription("Configure funny responses (Admin)")

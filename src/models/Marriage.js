@@ -10,9 +10,8 @@ const marriageSchema = new Schema({
   isDivorced: { type: Boolean, default: false }
 }, { timestamps: true });
 
-// Ensure unique active marriage per user per guild?
-// Or just global? Usually discord bots do it global or per guild.
-// Existing code seems to use user IDs as keys in a global object.
-// I'll stick to what the user had or improve it.
+// Performance Indexes (High Severity Fix)
+marriageSchema.index({ user1Id: 1, isDivorced: 1 });
+marriageSchema.index({ user2Id: 1, isDivorced: 1 });
 
 module.exports = model('Marriage', marriageSchema);

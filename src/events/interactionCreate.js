@@ -1,13 +1,10 @@
 const {
   Events,
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
+  PermissionFlagsBits,
 } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
-const { Colors, Emojis, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
+const { Colors, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
 const notify = require("../services/NotificationService");
 
 module.exports = {
@@ -33,7 +30,7 @@ module.exports = {
         // Notify WhatsApp on component failure
         await notify.notifyComponentFailure(`/${interaction.commandName}`, new Error("Command script not loaded or corrupted"));
 
-        const failEmbed = botFailure("Module Offline", `The script for \`/${interaction.commandName}\` is corrupted or failed to load. The Core remains intact.`);
+        const failEmbed = botFailure("Partial Module Failure", `The module for \`/${interaction.commandName}\` is currently unavailable or failed to load. The Core remains stable.`);
 
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({ embeds: [failEmbed] }).catch(() => {});

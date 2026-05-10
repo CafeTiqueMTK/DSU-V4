@@ -8,6 +8,7 @@ const { createBaseEmbed, success, error, info, Emojis, Colors } = require("../ut
 module.exports = [
   // --- CLAIM ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("claim")
       .setDescription("Claim your daily coins"),
@@ -49,6 +50,7 @@ module.exports = [
 
   // --- WORK ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("work")
       .setDescription("Work for coins!"),
@@ -83,6 +85,7 @@ module.exports = [
 
   // --- MYCOINS ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("mycoins")
       .setDescription("View your coins"),
@@ -99,6 +102,7 @@ module.exports = [
 
   // --- RANK (Leaderboard) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("rank")
       .setDescription("Show the leaderboard"),
@@ -118,6 +122,7 @@ module.exports = [
 
   // --- ECOMAN (Admin Management) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("ecoman")
       .setDescription("Manage economy (Admin)")
@@ -181,6 +186,7 @@ module.exports = [
 
   // --- ECONOMY (System Config) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("economy")
       .setDescription("System settings")

@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { Colors, Emojis } = require("./embeds.js");
+const { Colors } = require("./embeds.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -30,16 +30,18 @@ class Logger {
   }
 
   /**
-   * Appends log entry to file
+   * Appends log entry to file (Async)
    */
-  _toFile(level, message) {
+  async _toFile(level, message) {
     const timestamp = new Date().toISOString();
+    // eslint-disable-next-line no-control-regex
     const cleanMessage = message.replace(/\x1b\[[0-9;]*m/g, ""); // Remove ANSI codes for file
     const logEntry = `[${timestamp}] [${level}] ${cleanMessage}\n`;
-    
+
     try {
-      fs.appendFileSync(this.logFile, logEntry);
+      await fs.promises.appendFile(this.logFile, logEntry);
     } catch (err) {
+      // Don't use this.error here to avoid infinite loop
       process.stderr.write(`Failed to write to log file: ${err.message}\n`);
     }
   }

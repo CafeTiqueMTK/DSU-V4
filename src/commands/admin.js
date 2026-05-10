@@ -2,8 +2,6 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
@@ -14,49 +12,20 @@ const {
 const db = require("../db.js");
 const path = require("path");
 const { config } = require("../utils/env.js");
-const { createBaseEmbed, success, error, info, Emojis, Colors } = require("../utils/embeds");
+const { createBaseEmbed, success, error, info, Colors } = require("../utils/embeds");
 
 module.exports = [
   // --- DASHBOARD ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("dashboard")
       .setDescription("Interactive bot configuration dashboard")
       .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
     async execute(interaction) {
-      const embed = createBaseEmbed(interaction.user, { module: "🛡️ Admin System",
-        title: "📊 Bot Dashboard",
-        description: "Welcome to the interactive configuration dashboard. Select a module below to configure its settings.",
-        color: Colors.ADMIN,
-      })
-      .addFields(
-        { name: "🛡️ Moderation", value: "Configure logs, automod, and permissions.", inline: true },
-        { name: "💰 Economy", value: "Manage currency, daily rewards, and work.", inline: true },
-        { name: "🎫 Tickets", value: "Setup support system and categories.", inline: true }
-      );
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("dash_mod")
-          .setLabel("Moderation")
-          .setStyle(ButtonStyle.Secondary)
-          .setEmoji("🛡️"),
-        new ButtonBuilder()
-          .setCustomId("dash_eco")
-          .setLabel("Economy")
-          .setStyle(ButtonStyle.Secondary)
-          .setEmoji("💰"),
-        new ButtonBuilder()
-          .setCustomId("dash_tickets")
-          .setLabel("Tickets")
-          .setStyle(ButtonStyle.Secondary)
-          .setEmoji("🎫"),
-      );
-      await interaction.reply({
-        embeds: [embed],
-        components: [row],
-        flags: 64,
-      });
+      const dashManager = require("../utils/dashboardManager");
+      const ui = await dashManager.getMainMenu(interaction.user, interaction.guild.id);
+      await interaction.reply({ ...ui, flags: 64 });
     },
   },
 
@@ -134,6 +103,7 @@ module.exports = [
 
   // --- BOT RESET ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("botreset")
       .setDescription("Reset server config")
@@ -198,6 +168,7 @@ module.exports = [
 
   // --- UPDATE (GitHub Notifications) ---
   {
+    requiresDb: true,
     data: new SlashCommandBuilder()
       .setName("update")
       .setDescription("GitHub update notifications")

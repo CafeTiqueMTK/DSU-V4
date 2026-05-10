@@ -23,7 +23,7 @@ class WebDashboard {
 
     this.app.use(
       session({
-        secret: process.env.SESSION_SECRET || "fallback_secret_change_me",
+        secret: config.sessionSecret,
         resave: false,
         saveUninitialized: false,
         cookie: {
@@ -81,7 +81,81 @@ class WebDashboard {
       res.render("index");
     });
 
-    // --- Guild Management ---
+    // --- API ROUTES (Phase 1 Migration) ---
+    const apiRouter = express.Router();
+
+    const isApiAuthenticated = (req, res, next) => {
+      if (req.session.authenticated) return next();
+      res.status(401).json({ error: "Unauthorized" });
+    };
+
+    apiRouter.get("/auth/status", (req, res) => {
+      res.json({ authenticated: !!req.session.authenticated });
+    });
+
+    apiRouter.get("/health", (req, res) => {
+      res.json({
+        status: "ok",
+        timestamp: Date.now(),
+        botReady: this.bot.isReady(),
+      });
+    });
+
+    apiRouter.post("/auth/login", (req, res) => {
+      const { username, password } = req.body;
+      if (username === config.dashboardUser && password === config.dashboardPassword) {
+        req.session.authenticated = true;
+        return res.json({ success: true });
+      }
+      res.status(401).json({ error: "Invalid credentials" });
+    });
+
+    apiRouter.get("/bot/stats", isApiAuthenticated, (req, res) => {
+      res.json({
+        guilds: this.bot.guilds.cache.size,
+        users: this.bot.users.cache.size,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+      });
+    });
+
+    apiRouter.get("/guilds", isApiAuthenticated, (req, res) => {
+      const guilds = this.bot.guilds.cache.map(g => ({
+        id: g.id,
+        name: g.name,
+        icon: g.iconURL(),
+        memberCount: g.memberCount,
+      }));
+      res.json(guilds);
+    });
+
+    apiRouter.get("/guilds/:guildId", isApiAuthenticated, async (req, res) => {
+      const guild = this.bot.guilds.cache.get(req.params.guildId);
+      if (!guild) return res.status(404).json({ error: "Guild not found" });
+
+      const settings = await db.getSettings(guild.id);
+      res.json({
+        id: guild.id,
+        name: guild.name,
+        settings,
+        channels: guild.channels.cache.filter(c => c.type === 0 || c.type === 4).map(c => ({ id: c.id, name: c.name, type: c.type })),
+        roles: guild.roles.cache.filter(r => r.name !== "@everyone").map(r => ({ id: r.id, name: r.name })),
+      });
+    });
+
+    apiRouter.post("/guilds/:guildId/mod/:action", isApiAuthenticated, async (req, res) => {
+      const { guildId, action } = req.params;
+      try {
+        const result = await this.performModerationAction(guildId, action, req.body);
+        res.json({ success: true, ...result });
+      } catch (err) {
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    this.app.use("/api", apiRouter);
+
+    // --- Guild Management (Classic EJS) ---
 
     this.app.get("/guilds", isAuthenticated, (req, res) => {
       res.render("guilds");
@@ -185,15 +259,38 @@ class WebDashboard {
             const channel = guild.channels.cache.get(req.body.channel);
             if (channel && channel.isTextBased()) {
                const { EmbedBuilder } = require('discord.js');
+
+               // URL Validation Helper
+               const isValidUrl = (url) => {
+                 if (!url) return false;
+                 try {
+                   const parsed = new URL(url);
+                   return parsed.protocol === 'https:';
+                 } catch {
+                   return false;
+                 }
+               };
+
                const embed = new EmbedBuilder()
                  .setTitle(req.body.title || null)
                  .setDescription(req.body.description || null)
                  .setColor(req.body.color || "#6366f1");
 
-               if (req.body.authorName) embed.setAuthor({ name: req.body.authorName, iconURL: req.body.authorIcon || null });
-               if (req.body.thumbnail) embed.setThumbnail(req.body.thumbnail);
-               if (req.body.image) embed.setImage(req.body.image);
-               if (req.body.footerText) embed.setFooter({ text: req.body.footerText, iconURL: req.body.footerIcon || null });
+               if (req.body.authorName) {
+                 const authorData = { name: req.body.authorName };
+                 if (isValidUrl(req.body.authorIcon)) authorData.iconURL = req.body.authorIcon;
+                 embed.setAuthor(authorData);
+               }
+
+               if (isValidUrl(req.body.thumbnail)) embed.setThumbnail(req.body.thumbnail);
+               if (isValidUrl(req.body.image)) embed.setImage(req.body.image);
+
+               if (req.body.footerText) {
+                 const footerData = { text: req.body.footerText };
+                 if (isValidUrl(req.body.footerIcon)) footerData.iconURL = req.body.footerIcon;
+                 embed.setFooter(footerData);
+               }
+
                if (req.body.timestamp === "on") embed.setTimestamp();
 
                await channel.send({ embeds: [embed] });
@@ -219,112 +316,86 @@ class WebDashboard {
       isAuthenticated,
       async (req, res) => {
         const { guildId, action } = req.params;
-        const { userId, reason, duration } = req.body;
-        const guild = this.bot.guilds.cache.get(guildId);
-        if (!guild) return res.status(404).send("Guild not found");
-
         try {
-          const user = await this.bot.users.fetch(userId).catch(() => null);
-          if (!user)
-            return res.redirect(
-              `/guilds/${guild.id}?error=User+not+found&tab=moderation`,
-            );
-
-          if (action === "ban") {
-            await guild.members.ban(user, {
-              reason: reason || "Banned via Web Dashboard",
-            });
-            await db.logModAction(
-              guild,
-              user.tag,
-              "Ban (Web)",
-              reason,
-              "Dashboard",
-            );
-          } else if (action === "kick") {
-            const member = await guild.members.fetch(userId).catch(() => null);
-            if (member) {
-              await member.kick(reason || "Kicked via Web Dashboard");
-              await db.logModAction(
-                guild,
-                user.tag,
-                "Kick (Web)",
-                reason,
-                "Dashboard",
-              );
-            }
-          } else if (action === "warn") {
-            await db.addWarn(
-              guildId,
-              userId,
-              "Dashboard",
-              reason || "Warned via Web Dashboard",
-            );
-            const warns = await db.getWarns(guildId, userId);
-            await db.logModAction(
-              guild,
-              user.tag,
-              "Warn (Web)",
-              reason,
-              "Dashboard",
-              [{ name: "Count", value: warns.length.toString(), inline: true }],
-            );
-          } else if (action === "mute") {
-            const member = await guild.members.fetch(userId).catch(() => null);
-            const muteRole = guild.roles.cache.find(
-              (r) => r.name.toLowerCase() === "mute",
-            );
-            if (!muteRole) throw new Error("Mute role not found");
-            if (member) {
-              await member.roles.add(
-                muteRole,
-                reason || "Muted via Web Dashboard",
-              );
-              await db.logModAction(
-                guild,
-                user.tag,
-                "Mute (Web)",
-                reason,
-                "Dashboard",
-                [{ name: "Duration", value: `${duration || 10}m`, inline: true }],
-              );
-            }
-
-            if (duration) {
-              setTimeout(
-                async () => {
-                  const m = await guild.members.fetch(userId).catch(() => null);
-                  if (m && m.roles.cache.has(muteRole.id))
-                    await m.roles
-                      .remove(muteRole, "End of mute")
-                      .catch(() => {});
-                },
-                parseInt(duration) * 60000,
-              );
-            }
-          } else if (action === "clear") {
-            const { amount, channelId } = req.body;
-            const channel = guild.channels.cache.get(channelId);
-            if (channel && channel.isTextBased()) {
-              await channel.bulkDelete(parseInt(amount) || 10).catch(() => {});
-              await db.logModAction(
-                guild,
-                "N/A",
-                "Clear (Web)",
-                `Deleted ${amount} messages in #${channel.name}`,
-                "Dashboard"
-              );
-            }
-          }
-
-          res.redirect(`/guilds/${guild.id}?success=1&tab=moderation`);
+          await this.performModerationAction(guildId, action, req.body);
+          res.redirect(`/guilds/${guildId}?success=1&tab=moderation`);
         } catch (err) {
           res.redirect(
-            `/guilds/${guild.id}?error=${encodeURIComponent(err.message)}&tab=moderation`,
+            `/guilds/${guildId}?error=${encodeURIComponent(err.message)}&tab=moderation`,
           );
         }
       },
     );
+  }
+
+  async performModerationAction(guildId, action, data) {
+    const { userId, reason, duration, amount, channelId } = data;
+    const guild = this.bot.guilds.cache.get(guildId);
+    if (!guild) throw new Error("Guild not found");
+
+    const user = await this.bot.users.fetch(userId).catch(() => null);
+    if (!user && action !== "clear") throw new Error("User not found");
+
+    if (action === "ban") {
+      await guild.members.ban(user, {
+        reason: reason || "Banned via Web Dashboard",
+      });
+      await db.logModAction(guild, user.tag, "Ban (Web)", reason, "Dashboard");
+      return { user: user.tag };
+    } else if (action === "kick") {
+      const member = await guild.members.fetch(userId).catch(() => null);
+      if (member) {
+        await member.kick(reason || "Kicked via Web Dashboard");
+        await db.logModAction(guild, user.tag, "Kick (Web)", reason, "Dashboard");
+        return { user: user.tag };
+      }
+      throw new Error("Member not in guild");
+    } else if (action === "warn") {
+      await db.addWarn(guildId, userId, "Dashboard", reason || "Warned via Web Dashboard");
+      const warns = await db.getWarns(guildId, userId);
+      await db.logModAction(guild, user.tag, "Warn (Web)", reason, "Dashboard", [
+        { name: "Count", value: warns.length.toString(), inline: true },
+      ]);
+      return { user: user.tag, count: warns.length };
+    } else if (action === "mute") {
+      const member = await guild.members.fetch(userId).catch(() => null);
+      const muteRole = guild.roles.cache.find((r) => r.name.toLowerCase() === "mute");
+      if (!muteRole) throw new Error("Mute role not found");
+      if (member) {
+        // Validation (H-2 Fix)
+        const muteMinutes = Math.min(Math.max(parseInt(duration) || 10, 1), 40320); // Max 4 weeks
+
+        await member.roles.add(muteRole, reason || "Muted via Web Dashboard");
+        await db.logModAction(guild, user.tag, "Mute (Web)", reason, "Dashboard", [
+          { name: "Duration", value: `${muteMinutes}m`, inline: true },
+        ]);
+
+        if (muteMinutes) {
+          setTimeout(
+            async () => {
+              const m = await guild.members.fetch(userId).catch(() => null);
+              if (m && m.roles.cache.has(muteRole.id))
+                await m.roles.remove(muteRole, "End of mute").catch(() => {});
+            },
+            muteMinutes * 60000,
+          );
+        }
+        return { user: user.tag, duration: muteMinutes };
+      }
+      throw new Error("Member not in guild");
+    } else if (action === "clear") {
+      const channel = guild.channels.cache.get(channelId);
+      if (channel && channel.isTextBased()) {
+        // Validation (H-2 Fix)
+        const deleteAmount = Math.min(Math.max(parseInt(amount) || 1, 1), 100);
+
+        await channel.bulkDelete(deleteAmount).catch(() => {});
+        await db.logModAction(guild, "N/A", "Clear (Web)", `Deleted ${deleteAmount} messages in #${channel.name}`, "Dashboard");
+        return { amount: deleteAmount, channel: channel.name };
+      }
+      throw new Error("Channel not found or not text-based");
+    }
+    throw new Error("Unknown action");
   }
 
   start() {

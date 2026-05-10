@@ -1,11 +1,7 @@
 const {
   SlashCommandBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
 } = require("discord.js");
 const os = require("os");
-const db = require("../db.js");
 const { createBaseEmbed, Emojis, Colors } = require("../utils/embeds.js");
 
 module.exports = [
@@ -151,10 +147,10 @@ module.exports = [
       .setName("ping")
       .setDescription("Check the bot's latency"),
     async execute(interaction) {
-      const sent = await interaction.reply({
+      await interaction.reply({
         content: "Pinging...",
-        fetchReply: true,
       });
+      const sent = await interaction.fetchReply();
       const latency = sent.createdTimestamp - interaction.createdTimestamp;
       const embed = createBaseEmbed(interaction.user, { module: "ℹ️ General Info",
         title: "🏓 Pong!",
@@ -187,7 +183,7 @@ module.exports = [
         color: Colors.INFO,
       })
       .addFields(
-        { name: "👤 Developer", value: "[Thm](https://github.com/CafeTiqueMTK)", inline: true },
+        { name: "👤 Developer", value: "[ThM](https://github.com/CafeTiqueMTK)", inline: true },
         { name: "🔖 Version", value: "4.0.0", inline: true },
         { name: "📚 Library", value: "Discord.js v14", inline: true },
         { name: "🚀 Features", value: `${Emojis.BULLET} Advanced Moderation\n${Emojis.BULLET} Dynamic Economy\n${Emojis.BULLET} Ticket System\n${Emojis.BULLET} GitHub Tracking`, inline: false }

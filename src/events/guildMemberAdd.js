@@ -61,7 +61,11 @@ module.exports = {
       const recentMembers = guildMembers.filter((m) => {
           try { return (now - m.joinedTimestamp) < 10000; } catch { return false; }
       });
-      
+
+      // Memory Protection: Limit array size to prevent leak (Audit Fix)
+      if (recentJoins.length > 100) recentJoins.splice(0, recentJoins.length - 100);
+      if (recentMembers.length > 100) recentMembers.splice(0, recentMembers.length - 100);
+
       this.recentJoins.set(guildId, recentJoins);
       this.recentMembers.set(guildId, recentMembers);
 

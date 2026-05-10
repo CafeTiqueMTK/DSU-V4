@@ -1,4 +1,4 @@
-const { Events, EmbedBuilder } = require("discord.js");
+const { Events } = require("discord.js");
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
 const { createLogEmbed, Colors } = require("../utils/embeds");
@@ -72,7 +72,9 @@ module.exports = {
             "🚨 Automod System"
           );
           await message.author.send({ embeds: [dmEmbed] }).catch(() => {});
-        } catch (e) {}
+        } catch (e) {
+          // Ignore DM errors
+        }
 
         const actionChannelId = guildSettings.automod?.actionChannel;
         let logChannel = null;
@@ -218,6 +220,7 @@ module.exports = {
 
       // Anti Invisible Characters / Zalgo
       if (guildSettings.categories?.invisibleChars?.enabled) {
+        // eslint-disable-next-line no-misleading-character-class
         const invisibleCharsRegex = /[\u200B-\u200D\uFEFF\u202A-\u202E\u00AD\u2060-\u206F\u17B4\u17B5\u115F\u1160\u3164\uFFA0\u180E\u0300-\u036F\u0483-\u0489\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/;
         if (invisibleCharsRegex.test(message.content)) {
           await message.delete().catch(() => {});
