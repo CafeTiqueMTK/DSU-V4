@@ -40,3 +40,5 @@ The project leverages a sophisticated service-oriented architecture, ensuring hi
 ## 📜 License
 
 This project is a private specialized instance distributed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+yes, this bot is vibe coded, you can tell me that if you know how to code without AI, and you teach me to code :)
