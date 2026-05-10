@@ -14,6 +14,8 @@ if (!isProduction) {
 const requiredEnvVars = [
   "DISCORD_TOKEN",
   "CLIENT_ID",
+  "CLIENT_SECRET",
+  "CALLBACK_URL",
   "MONGODB_URI",
   "OWNER_ID",
   "WEB_PORT",
@@ -41,6 +43,12 @@ const config = {
   get clientId() {
     return process.env.CLIENT_ID;
   },
+  get clientSecret() {
+    return process.env.CLIENT_SECRET;
+  },
+  get callbackUrl() {
+    return process.env.CALLBACK_URL;
+  },
   get ownerId() {
     return process.env.OWNER_ID;
   },
@@ -52,12 +60,6 @@ const config = {
   },
   get sessionSecret() {
     return process.env.SESSION_SECRET || "dsu-v4-secret";
-  },
-  get dashboardUser() {
-    return process.env.DASHBOARD_USER;
-  },
-  get dashboardPassword() {
-    return process.env.DASHBOARD_PASSWORD;
   },
   get githubOwner() {
     return process.env.GITHUB_OWNER || "CafeTiqueMTK";
@@ -78,12 +80,6 @@ const config = {
   },
   get githubToken() {
     return process.env.GITHUB_TOKEN;
-  },
-  get whatsappPhone() {
-    return process.env.WHATSAPP_PHONE;
-  },
-  get whatsappApiKey() {
-    return process.env.WHATSAPP_API_KEY;
   },
 };
 

@@ -3,7 +3,6 @@ const Bot = require("./client.js");
 const { log } = require("./utils/logger");
 const path = require("path");
 const { getCommandFiles } = require("./utils/commandLoader");
-const notify = require("./services/NotificationService");
 
 /**
  * DSU-V4 CORE SUPERVISOR
@@ -19,9 +18,6 @@ if (!validateEnv()) {
 // Global Stability Listeners
 process.on("uncaughtException", async (err) => {
   log.error("🛡️ [CORE] Uncaught Exception captured. Process must restart for stability:", err);
-
-  // M-3 Fix: Notify WhatsApp on fatal crash
-  await notify.notifyGlobalCrash(err);
 
   // Important: After logging, we exit so PM2/Docker can restart the bot cleanly.
   // Continuing after uncaughtException is dangerous as the state is undefined.
@@ -61,12 +57,8 @@ setInterval(async () => {
     try {
         log.info("🛡️ Core Supervisor starting bot...");
         await bot.start();
-
-        // Notify startup success
-        await notify.notifyStartup();
     } catch (err) {
         log.error("🛡️ [CORE] Fatal error during bot startup sequence:", err);
-        await notify.notifyGlobalCrash(err);
         // We don't exit(1) here to allow the process to stay alive
         // for debugging or potential manual recovery if parts are loaded.
     }

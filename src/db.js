@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const { config } = require("./utils/env.js");
 const GuildSetting = require("./models/GuildSetting.js");
 const { log } = require("./utils/logger");
-const notify = require("./services/NotificationService");
 
 class Database {
   constructor() {
@@ -41,9 +40,6 @@ class Database {
       await this.loadGuildSettingsCache();
       log.success("Connected to MongoDB.");
     } catch (error) {
-      // Notify WhatsApp on DB failure
-      await notify.notifyDbFailure(error);
-
       if (config.production) {
         log.error("CRITICAL: Could not connect to MongoDB in production.", error);
         throw error;

@@ -12,18 +12,19 @@
             <a href="/guilds" class="hover:text-white transition-colors">Serveurs</a>
         </div>
 
-        <% if (locals.bot && locals.bot.user) { %>
-            <div class="flex items-center gap-4 pl-4 border-l border-white/10">
+        <div class="flex items-center gap-4 pl-4 border-l border-white/10">
+            <% if (locals.user) { %>
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-full bg-zinc-800 overflow-hidden border border-white/10">
-                        <img src="<%= bot.user.displayAvatarURL() %>" alt="Bot Avatar" class="w-full h-full object-cover">
+                        <img src="https://cdn.discordapp.com/avatars/<%= user.id %>/<%= user.avatar %>.png" alt="Avatar" class="w-full h-full object-cover">
                     </div>
-                    <span class="text-sm font-medium text-zinc-300 hidden sm:block"><%= bot.user.tag %></span>
+                    <span class="text-sm font-medium text-zinc-300 hidden sm:block"><%= user.username %>#<%= user.discriminator !== '0' ? user.discriminator : '' %></span>
                 </div>
-                <a href="/logout" class="text-zinc-500 hover:text-red-400 transition-colors" title="Déconnexion">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                </a>
-            </div>
-        <% } %>
+            <% } %>
+
+            <a href="/logout" class="text-zinc-500 hover:text-red-400 transition-colors" title="Déconnexion">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </a>
+        </div>
     </div>
 </nav>

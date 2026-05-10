@@ -5,7 +5,6 @@ const {
 const db = require("../db.js");
 const { getLogChannel } = require("../utils/logger");
 const { Colors, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
-const notify = require("../services/NotificationService");
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -26,9 +25,6 @@ module.exports = {
       // Handle "Module Down" - Command is registered in Discord but failed to load in bot
       if (!command) {
         console.error(`[CRITICAL] Command /${interaction.commandName} was invoked but is not loaded.`);
-
-        // Notify WhatsApp on component failure
-        await notify.notifyComponentFailure(`/${interaction.commandName}`, new Error("Command script not loaded or corrupted"));
 
         const failEmbed = botFailure("Partial Module Failure", `The module for \`/${interaction.commandName}\` is currently unavailable or failed to load. The Core remains stable.`);
 
@@ -81,9 +77,6 @@ module.exports = {
         }).catch(() => {});
       } catch (err) {
         console.error(`Error executing ${interaction.commandName}:`, err);
-
-        // Notify WhatsApp on execution crash
-        await notify.notifyComponentFailure(`/${interaction.commandName}`, err);
 
         const failEmbed = botFailure("Execution Crash", `An unexpected error occurred in \`/${interaction.commandName}\` script.\n\n**Error:** \`${err.message}\``);
 

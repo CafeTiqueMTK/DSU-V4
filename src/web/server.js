@@ -1,5 +1,7 @@
 const express = require("express");
 const session = require("express-session");
+const passport = require("passport");
+const { Strategy } = require("passport-discord");
 const path = require("path");
 const { config } = require("../utils/env.js");
 const db = require("../db.js");
@@ -10,8 +12,33 @@ class WebDashboard {
     this.app = express();
     this.port = config.webPort;
 
+    this.setupPassport();
     this.setupMiddleware();
     this.setupRoutes();
+  }
+
+  setupPassport() {
+    passport.serializeUser((user, done) => {
+      done(null, user);
+    });
+
+    passport.deserializeUser((obj, done) => {
+      done(null, obj);
+    });
+
+    passport.use(
+      new Strategy(
+        {
+          clientID: config.clientId,
+          clientSecret: config.clientSecret,
+          callbackURL: config.callbackUrl,
+          scope: ["identify", "guilds"],
+        },
+        (accessToken, refreshToken, profile, done) => {
+          process.nextTick(() => done(null, profile));
+        },
+      ),
+    );
   }
 
   setupMiddleware() {
@@ -32,17 +59,21 @@ class WebDashboard {
         },
       }),
     );
+
+    this.app.use(passport.initialize());
+    this.app.use(passport.session());
   }
 
   setupRoutes() {
     const isAuthenticated = (req, res, next) => {
-      if (req.session.authenticated) {
+      if (req.isAuthenticated()) {
         return next();
       }
       res.redirect("/login");
     };
 
     this.app.use((req, res, next) => {
+      res.locals.user = req.user || null;
       res.locals.error = req.query.error || null;
       res.locals.success = req.query.success === "1";
       res.locals.tab = req.query.tab || "general";
@@ -51,30 +82,27 @@ class WebDashboard {
     });
 
     this.app.get("/login", (req, res) => {
-      if (req.session.authenticated) return res.redirect("/");
+      if (req.isAuthenticated()) return res.redirect("/");
       res.render("login", { error: null });
     });
 
-    this.app.post("/login", (req, res) => {
-      const { username, password } = req.body;
-      if (!config.dashboardUser || !config.dashboardPassword) {
-        return res.render("login", {
-          error: "Le dashboard n'est pas configuré (identifiants manquants).",
-        });
-      }
-      if (
-        username === config.dashboardUser &&
-        password === config.dashboardPassword
-      ) {
-        req.session.authenticated = true;
-        return res.redirect("/");
-      }
-      res.render("login", { error: "Identifiants invalides" });
-    });
+    this.app.get(
+      "/auth/discord",
+      passport.authenticate("discord", { scope: ["identify", "guilds"] }),
+    );
+
+    this.app.get(
+      "/auth/discord/callback",
+      passport.authenticate("discord", { failureRedirect: "/login?error=AuthFailed" }),
+      (req, res) => {
+        res.redirect("/");
+      },
+    );
 
     this.app.get("/logout", (req, res) => {
-      req.session.destroy();
-      res.redirect("/login");
+      req.logout(() => {
+        res.redirect("/login");
+      });
     });
 
     this.app.get("/", isAuthenticated, (req, res) => {
@@ -158,12 +186,49 @@ class WebDashboard {
     // --- Guild Management (Classic EJS) ---
 
     this.app.get("/guilds", isAuthenticated, (req, res) => {
-      res.render("guilds");
+      let guilds = [];
+
+      if (req.user && req.user.id === config.ownerId) {
+        // Bot Owner: See all guilds the bot is in
+        guilds = this.bot.guilds.cache.map((g) => ({
+          id: g.id,
+          name: g.name,
+          icon: g.icon,
+          owner: g.ownerId === req.user.id,
+          permissions: "8", // Admin for UI purposes
+        }));
+      } else if (req.user && req.user.guilds) {
+        // Discord user: Filter guilds they have permissions in AND bot is in
+        guilds = req.user.guilds
+          .filter((g) => {
+            const perms = BigInt(g.permissions);
+            const hasPerms = (perms & BigInt(0x8)) || (perms & BigInt(0x20)); // Admin or Manage Guild
+            return hasPerms && this.bot.guilds.cache.has(g.id);
+          })
+          .map((g) => ({
+            id: g.id,
+            name: g.name,
+            icon: g.icon,
+            owner: g.owner,
+            permissions: g.permissions,
+          }));
+      }
+
+      res.render("guilds", { userGuilds: guilds });
     });
 
     this.app.get("/guilds/:guildId", isAuthenticated, async (req, res) => {
       const guild = this.bot.guilds.cache.get(req.params.guildId);
       if (!guild) return res.redirect("/guilds");
+
+      // Permission check for individual guild access
+      if (req.user.id !== config.ownerId) {
+        const userGuild = req.user.guilds.find((g) => g.id === guild.id);
+        if (!userGuild) return res.redirect("/guilds");
+        const perms = BigInt(userGuild.permissions);
+        const hasPerms = (perms & BigInt(0x8)) || (perms & BigInt(0x20));
+        if (!hasPerms) return res.redirect("/guilds");
+      }
 
       const settings = await db.getSettings(guild.id);
 
