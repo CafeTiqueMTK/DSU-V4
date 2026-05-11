@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { execSync } = require("child_process");
 const { config } = require("./utils/env.js");
 const GuildSetting = require("./models/GuildSetting.js");
 const { log } = require("./utils/logger");
@@ -23,6 +24,12 @@ class Database {
 
   async init() {
     if (this.isReady) return;
+
+    // Automatic Database Start (if applicable)
+    if (process.platform === "linux" && !process.env.DOCKER_CONTAINER) {
+      this.ensureDatabaseIsRunning();
+    }
+
     if (!config.mongoUri) {
       log.error("MONGODB_URI is not defined in environment variables.");
       if (config.production) throw new Error("MongoDB URI is required in production.");
@@ -56,6 +63,41 @@ class Database {
     log.info("Disconnected from MongoDB.");
   }
 
+  ensureDatabaseIsRunning() {
+    try {
+      log.info("🔍 Checking MongoDB service...");
+      let hasSystemd = false;
+      try {
+        hasSystemd = execSync("systemctl list-unit-files mongod.service", { stdio: "pipe" }).toString().includes("mongod.service");
+      } catch (e) {
+        hasSystemd = false;
+      }
+
+      if (hasSystemd) {
+        log.info("📡 Systemd service detected.");
+        const isActive = execSync("systemctl is-active mongod", { stdio: "pipe" }).toString().trim() === "active";
+        if (!isActive) {
+          log.warn("⚠️ MongoDB (systemd) is stopped. Attempting to start...");
+          execSync("sudo systemctl start mongod", { stdio: "inherit" });
+          log.success("✅ MongoDB (systemd) started successfully.");
+        } else {
+          log.success("✅ MongoDB (systemd) is already running.");
+        }
+        return;
+      }
+
+      // Fallback to Docker
+      log.info("🐳 Systemd service not found. Attempting to start via Docker...");
+      try {
+        execSync("docker-compose up -d db", { stdio: "inherit" });
+        log.success("✅ MongoDB (docker) started successfully.");
+      } catch (dockerErr) {
+        log.warn(`❌ Docker fallback failed: ${dockerErr.message}`);
+      }
+    } catch (err) {
+      log.warn(`⚠️ Database check failed: ${err.message}`);
+    }
+  }
 
   // --- Guild Settings Logic (To be moved to a SettingsService later) ---
 

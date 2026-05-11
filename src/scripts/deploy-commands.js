@@ -1,7 +1,7 @@
 const { REST, Routes, Collection } = require("discord.js");
 const path = require("path");
-const { config, validateEnv } = require("../src/utils/env.js");
-const { loadCommands } = require("../src/utils/commandLoader.js");
+const { config, validateEnv } = require("../utils/env.js");
+const { loadCommands } = require("../utils/commandLoader.js");
 
 if (!validateEnv()) {
   console.error("Environment variables are missing.");
@@ -11,7 +11,7 @@ if (!validateEnv()) {
 const token = config.token;
 const clientId = config.clientId;
 
-const commandsPath = path.join(__dirname, "../src/commands");
+const commandsPath = path.join(__dirname, "../commands");
 const mockClient = { commands: new Collection() };
 
 console.log("Loading commands for deployment...");

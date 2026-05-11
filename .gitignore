@@ -82,7 +82,6 @@ src/wap.js
 
 # Development tools & Mocks
 tests/test-ui.js
-dsu.sh
 
 # AI & Documentation
 .ai/
