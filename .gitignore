@@ -81,18 +81,13 @@ Thumbs.db
 src/wap.js
 
 # Development tools & Mocks
-test-ui.js
+tests/test-ui.js
 dsu.sh
 
-# Claude Architecture
+# AI & Documentation
+.ai/
 .claude/
-CHANGELOG.md
-archi.md
-CLAUDE.md
-GEMINI.md
 plan.md
-DASHBOARD_SPECS.md
-MIGRATION_PLAN.md
 AI_*.md
 
 # Sensitive data

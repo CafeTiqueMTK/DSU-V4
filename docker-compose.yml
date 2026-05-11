@@ -15,7 +15,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./banword.json:/app/banword.json # Keep banwords editable from host
+      - ./data/banword.json:/app/data/banword.json # Keep banwords editable from host
 
   db:
     image: mongo:latest

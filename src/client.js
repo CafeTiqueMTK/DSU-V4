@@ -32,7 +32,7 @@ class Bot extends Client {
 
     // Load and compile banwords
     try {
-      const banwordPath = path.join(process.cwd(), "banword.json");
+      const banwordPath = path.join(process.cwd(), "data", "banword.json");
       if (fs.existsSync(banwordPath)) {
         this.banwords = JSON.parse(fs.readFileSync(banwordPath, "utf-8"));
         // Pre-compile regex for performance and escape special characters
