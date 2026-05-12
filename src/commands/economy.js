@@ -18,8 +18,17 @@ module.exports = [
       const settings = await db.getSettings(guildId);
       
       if (settings.streak?.enabled === false) {
-        const embed = error(interaction.user, "The economy system is currently disabled on this server.", "Economy Disabled", "💰 Economy System");
-        return interaction.reply({ embeds: [embed], flags: 64 });
+        return interaction.reply({
+          embeds: [
+            error(
+              interaction.user,
+              "The economy system is currently disabled on this server.",
+              "Economy Disabled",
+              "💰 Economy System",
+            ),
+          ],
+          flags: 64,
+        });
       }
 
       const userData = await db.getUserData(userId);
@@ -29,12 +38,17 @@ module.exports = [
 
       if (now - lastClaim < 86400000) {
         const next = new Date(lastClaim + 86400000);
-        const embed = createBaseEmbed(interaction.user, { module: "💰 Economy System",
-          title: `⏳ Daily Claim`,
-          description: `You've already claimed your daily coins today. Next claim: <t:${Math.floor(next.getTime() / 1000)}:R>`,
-          color: Colors.WARNING,
+        return interaction.reply({
+          embeds: [
+            error(
+              interaction.user,
+              `You've already claimed your daily coins today. Next claim: <t:${Math.floor(next.getTime() / 1000)}:R>`,
+              "Daily Claim Cooldown",
+              "💰 Economy System",
+            ),
+          ],
+          flags: 64,
         });
-        return interaction.reply({ embeds: [embed], flags: 64 });
       }
 
       const streak = lastClaim && now - lastClaim < 172800000 ? (daily.streak || 0) + 1 : 1;
@@ -61,12 +75,17 @@ module.exports = [
       const timeLeft = 3600000 - (now - (workData.lastWork || 0));
 
       if (timeLeft > 0) {
-        const embed = createBaseEmbed(interaction.user, { module: "💰 Economy System",
-          title: `⏳ Work Cooldown`,
-          description: `You are too tired to work! Please wait **${Math.ceil(timeLeft / 60000)} minutes**.`,
-          color: Colors.WARNING,
+        return interaction.reply({
+          embeds: [
+            error(
+              interaction.user,
+              `You are too tired to work! Please wait **${Math.ceil(timeLeft / 60000)} minutes**.`,
+              "Work Cooldown",
+              "💰 Economy System",
+            ),
+          ],
+          flags: 64,
         });
-        return interaction.reply({ embeds: [embed], flags: 64 });
       }
 
       const reward = Math.floor(Math.random() * 100) + 50;

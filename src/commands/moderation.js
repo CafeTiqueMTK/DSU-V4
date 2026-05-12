@@ -2,9 +2,10 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
+  EmbedBuilder,
 } = require("discord.js");
 const db = require("../db.js");
-const { success, error } = require("../utils/embeds.js");
+const { success, error, Colors, Emojis } = require("../utils/embeds.js");
 
 module.exports = [
   // --- MAIN MOD COMMAND (ban, kick, warn, mute) ---
@@ -96,13 +97,47 @@ module.exports = [
           !interaction.member.permissions.has(PermissionFlagsBits.BanMembers)
         ) {
           return interaction.reply({
-            embeds: [error(interaction.user, "You lack Ban permissions.", "Error", "🔨 Moderation System")],
+            embeds: [
+              error(
+                interaction.user,
+                "You lack Ban permissions.",
+                "Error",
+                "🔨 Moderation System",
+              ),
+            ],
             flags: 64,
           });
         }
+
+        // Send DM notification
+        const dmEmbed = new EmbedBuilder()
+          .setTitle(`🔨 Ban Applied`)
+          .setDescription(
+            `You have been banned from **${interaction.guild.name}**.`,
+          )
+          .addFields({ name: "Reason", value: reason, inline: true })
+          .setColor(Colors.BAN)
+          .setTimestamp();
+
+        await user.send({ embeds: [dmEmbed] }).catch(async () => {
+          await interaction.channel
+            .send({
+              content: `<@${user.id}>, your DMs are closed.`,
+              embeds: [dmEmbed],
+            })
+            .catch(() => {});
+        });
+
         await interaction.guild.members.ban(user, { reason }).catch(() => {});
         await interaction.reply({
-          embeds: [success(interaction.user, `**${user.tag}** has been banned.`, "Ban Applied", "🔨 Moderation System")],
+          embeds: [
+            createBaseEmbed(interaction.user, {
+              title: "🔨 Ban Applied",
+              description: `**${user.tag}** has been banned.`,
+              color: Colors.BAN,
+              module: "🔨 Moderation System",
+            }),
+          ],
           flags: 64,
         });
         await db.logModAction(
@@ -113,9 +148,35 @@ module.exports = [
           interaction.user,
         );
       } else if (sub === "kick") {
+        // Send DM notification
+        const dmEmbed = new EmbedBuilder()
+          .setTitle(`🔨 Kick Applied`)
+          .setDescription(
+            `You have been kicked from **${interaction.guild.name}**.`,
+          )
+          .addFields({ name: "Reason", value: reason, inline: true })
+          .setColor(Colors.NON_FATAL)
+          .setTimestamp();
+
+        await user.send({ embeds: [dmEmbed] }).catch(async () => {
+          await interaction.channel
+            .send({
+              content: `<@${user.id}>, your DMs are closed.`,
+              embeds: [dmEmbed],
+            })
+            .catch(() => {});
+        });
+
         await member.kick(reason).catch(() => {});
         await interaction.reply({
-          embeds: [success(interaction.user, `**${user.tag}** has been kicked.`, "Kick Applied", "🔨 Moderation System")],
+          embeds: [
+            createBaseEmbed(interaction.user, {
+              title: "🔨 Kick Applied",
+              description: `**${user.tag}** has been kicked.`,
+              color: Colors.NON_FATAL,
+              module: "🔨 Moderation System",
+            }),
+          ],
           flags: 64,
         });
         await db.logModAction(
@@ -128,8 +189,42 @@ module.exports = [
       } else if (sub === "warn") {
         await db.addWarn(guildId, user.id, interaction.user.id, reason);
         const warns = await db.getWarns(guildId, user.id);
+
+        // Send DM notification
+        const dmEmbed = new EmbedBuilder()
+          .setTitle(`${Emojis.WARNING} Warning Received`)
+          .setDescription(
+            `You have received a warning on **${interaction.guild.name}**.`,
+          )
+          .addFields(
+            { name: "Reason", value: reason, inline: true },
+            {
+              name: "Total Warnings",
+              value: warns.length.toString(),
+              inline: true,
+            },
+          )
+          .setColor(Colors.WARNING)
+          .setTimestamp();
+
+        await user.send({ embeds: [dmEmbed] }).catch(async () => {
+          await interaction.channel
+            .send({
+              content: `<@${user.id}>, your DMs are closed.`,
+              embeds: [dmEmbed],
+            })
+            .catch(() => {});
+        });
+
         await interaction.reply({
-          embeds: [success(interaction.user, `**${user.tag}** has been warned.\nTotal warnings: **${warns.length}**`, "Warn Applied", "🔨 Moderation System")],
+          embeds: [
+            success(
+              interaction.user,
+              `**${user.tag}** has been warned.\nTotal warnings: **${warns.length}**`,
+              "Warn Applied",
+              "🔨 Moderation System",
+            ),
+          ],
           flags: 64,
         });
         await db.logModAction(
@@ -147,12 +242,46 @@ module.exports = [
         );
         if (!muteRole)
           return interaction.reply({
-            embeds: [error(interaction.user, 'No "mute" role found. Please create one named "mute".', "Error", "🔨 Moderation System")],
+            embeds: [
+              error(
+                interaction.user,
+                'No "mute" role found. Please create one named "mute".',
+                "Error",
+                "🔨 Moderation System",
+              ),
+            ],
             flags: 64,
           });
+
+        // Send DM notification
+        const dmEmbed = new EmbedBuilder()
+          .setTitle(`🔨 Mute Applied`)
+          .setDescription(
+            `You have been muted on **${interaction.guild.name}** for **${duration}m**.`,
+          )
+          .addFields({ name: "Reason", value: reason, inline: true })
+          .setColor(Colors.NON_FATAL)
+          .setTimestamp();
+
+        await user.send({ embeds: [dmEmbed] }).catch(async () => {
+          await interaction.channel
+            .send({
+              content: `<@${user.id}>, your DMs are closed.`,
+              embeds: [dmEmbed],
+            })
+            .catch(() => {});
+        });
+
         await member.roles.add(muteRole, reason).catch(() => {});
         await interaction.reply({
-          embeds: [success(interaction.user, `**${user.tag}** has been muted for **${duration}m**.`, "Mute Applied", "🔨 Moderation System")],
+          embeds: [
+            createBaseEmbed(interaction.user, {
+              title: "🔨 Mute Applied",
+              description: `**${user.tag}** has been muted for **${duration}m**.`,
+              color: Colors.NON_FATAL,
+              module: "🔨 Moderation System",
+            }),
+          ],
           flags: 64,
         });
         await db.logModAction(
@@ -352,12 +481,33 @@ module.exports = [
       try {
         await user.send(message);
         await interaction.reply({
-          embeds: [success(interaction.user, `Message sent to **${user.tag}**.`, "DM Sent", "🔨 Moderation System")],
+          embeds: [
+            success(
+              interaction.user,
+              `Message sent to **${user.tag}**.`,
+              "DM Sent",
+              "🔨 Moderation System",
+            ),
+          ],
           flags: 64,
         });
       } catch {
+        await interaction.channel
+          .send({
+            content: `<@${user.id}>, your DMs are closed. Message from ${interaction.user.tag}:`,
+            description: message,
+          })
+          .catch(() => {});
+
         await interaction.reply({
-          embeds: [error(interaction.user, `Unable to DM **${user.tag}**. They might have DMs disabled.`, "Error", "🔨 Moderation System")],
+          embeds: [
+            info(
+              interaction.user,
+              `Unable to DM **${user.tag}**. The message has been sent in the current channel instead.`,
+              "DM Fallback",
+              "🔨 Moderation System",
+            ),
+          ],
           flags: 64,
         });
       }

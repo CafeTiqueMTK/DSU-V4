@@ -15,7 +15,7 @@ module.exports = {
     // Fetch settings from MongoDB
     const guildSettings = await db.getSettings(guildId);
 
-    // --- 1. Système de coins par message (Converted to UserData) ---
+    // --- 1. Message Coins System (Converted to UserData) ---
     try {
       if (guildSettings.level?.enabled) {
         const xpGain = 5;
@@ -53,14 +53,20 @@ module.exports = {
         const sendAutomodWarning = async (reason, violationType) => {
         if (!client.automodCooldown) client.automodCooldown = new Map();
 
-        // Memory Protection (Audit Fix)
-        if (client.automodCooldown.size > 1000) client.automodCooldown.clear();
+        // Memory Protection: Granular Cleanup
+        if (client.automodCooldown.size > 1000) {
+            const now = Date.now();
+            for (const [key, time] of client.automodCooldown.entries()) {
+                if (now - time > 60000) client.automodCooldown.delete(key);
+            }
+        }
 
         const cooldownKey = `${guildId}:${userId}:${violationType}`;
         const now = Date.now();
         if (now - (client.automodCooldown.get(cooldownKey) || 0) < 10000)
           return;
         client.automodCooldown.set(cooldownKey, now);
+        // We no longer rely solely on individual timeouts for memory cleanup
         setTimeout(() => client.automodCooldown.delete(cooldownKey), 10000);
 
         try {
@@ -127,8 +133,13 @@ module.exports = {
       if (guildSettings.antiSpam?.enabled) {
         if (!client.spamMap) client.spamMap = new Map();
 
-        // Memory Protection: Limit Map size (Audit Fix)
-        if (client.spamMap.size > 1000) client.spamMap.clear();
+        // Memory Protection: Granular Cleanup
+        if (client.spamMap.size > 1000) {
+            const now = Date.now();
+            for (const [key, times] of client.spamMap.entries()) {
+                if (!times.length || now - times[times.length - 1] > 60000) client.spamMap.delete(key);
+            }
+        }
 
         const spamKey = `${guildId}:${userId}`;
         const times = client.spamMap.get(spamKey);
@@ -244,8 +255,13 @@ module.exports = {
         if (triggers.some((t) => lower.includes(t))) {
           if (!client.funnyCooldown) client.funnyCooldown = new Map();
 
-          // Memory Protection: Limit Map size (Audit Fix)
-          if (client.funnyCooldown.size > 1000) client.funnyCooldown.clear();
+          // Memory Protection: Granular Cleanup
+          if (client.funnyCooldown.size > 1000) {
+              const now = Date.now();
+              for (const [key, time] of client.funnyCooldown.entries()) {
+                  if (now - time > 120000) client.funnyCooldown.delete(key);
+              }
+          }
 
           const key = `${guildId}:${userId}:${type}`;
           const now = Date.now();

@@ -26,7 +26,7 @@ async function getGitHubProfile(interaction) {
       Accept: "application/vnd.github.v3+json",
       "User-Agent": "DSU-Bot/1.0",
     };
-    const githubToken = process.env.GITHUB_TOKEN;
+    const githubToken = config.githubToken;
     if (githubToken) headers["Authorization"] = `token ${githubToken}`;
 
     const response = await fetch(`https://api.github.com/users/${username}`, {
@@ -76,13 +76,10 @@ async function getGitHubProfile(interaction) {
       });
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
-    const errorEmbed = new EmbedBuilder()
-      .setTitle("❌ GitHub Profile Error")
-      .setDescription(error.message)
-      .setColor(0xff5555)
-      .setTimestamp();
-    await interaction.editReply({ embeds: [errorEmbed] });
+  } catch (err) {
+    await interaction.editReply({
+      embeds: [error(interaction.user, err.message, "GitHub Profile Error")],
+    });
   }
 }
 
@@ -95,7 +92,7 @@ async function getGitHubRepo(interaction) {
       Accept: "application/vnd.github.v3+json",
       "User-Agent": "DSU-Bot/1.0",
     };
-    const githubToken = process.env.GITHUB_TOKEN;
+    const githubToken = config.githubToken;
     if (githubToken) headers["Authorization"] = `token ${githubToken}`;
 
     const response = await fetch(
@@ -182,13 +179,10 @@ async function getGitHubRepo(interaction) {
       });
 
     await interaction.editReply({ embeds: [embed] });
-  } catch (error) {
-    const errorEmbed = new EmbedBuilder()
-      .setTitle("❌ GitHub Repository Error")
-      .setDescription(error.message)
-      .setColor(0xff5555)
-      .setTimestamp();
-    await interaction.editReply({ embeds: [errorEmbed] });
+  } catch (err) {
+    await interaction.editReply({
+      embeds: [error(interaction.user, err.message, "GitHub Repository Error")],
+    });
   }
 }
 
@@ -274,7 +268,7 @@ module.exports = [
         await interaction.reply({ embeds: [embed] });
       } catch (e) {
         await interaction.reply({
-          content: "❌ Error fetching weather.",
+          embeds: [error(interaction.user, "Error fetching weather.", "API Error")],
           flags: 64,
         });
       }
@@ -306,7 +300,7 @@ module.exports = [
         await interaction.reply({ embeds: [embed] });
       } catch (e) {
         await interaction.reply({
-          content: "❌ Wikipedia search error.",
+          embeds: [error(interaction.user, "Wikipedia search error.", "API Error")],
           flags: 64,
         });
       }

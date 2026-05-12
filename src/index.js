@@ -1,4 +1,4 @@
-const { validateEnv } = require("./utils/env.js");
+const { validateEnv, config } = require("./utils/env.js");
 const Bot = require("./client.js");
 const { log } = require("./utils/logger");
 const path = require("path");
@@ -41,7 +41,7 @@ setInterval(async () => {
 
         // Simple heuristic: if we have fewer commands than files (considering most files have 1 command),
         // or specifically checking for critical test modules in CRASH_MODE.
-        if (process.env.CRASH_MODE === "true") {
+        if (config.crashMode) {
             const hasFunModule = commandFiles.some(f => f.includes("fun.js")) && bot.commands.some(c => c.data.name === "hug"); // hug is in fun.js
 
             if (!hasFunModule) {

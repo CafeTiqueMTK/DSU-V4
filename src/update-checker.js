@@ -74,8 +74,8 @@ class UpdateChecker {
         Accept: "application/vnd.github.v3+json",
         "User-Agent": "DSU-Bot",
       };
-      if (process.env.GITHUB_TOKEN)
-        headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
+      if (envConfig.githubToken)
+        headers["Authorization"] = `token ${envConfig.githubToken}`;
 
       const res = await fetch(
         `https://api.github.com/repos/${repoOwner}/${repoName}/commits?per_page=1`,

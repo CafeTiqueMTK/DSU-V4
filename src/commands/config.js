@@ -5,6 +5,7 @@ const {
   ChannelType,
 } = require("discord.js");
 const db = require("../db.js");
+const { success, error, info, Colors } = require("../utils/embeds");
 
 module.exports = {
   requiresDb: true,
@@ -206,7 +207,14 @@ module.exports = {
           const role = interaction.options.getRole("role");
           await db.updateSettings(guildId, { moderatorRole: role.id });
           return interaction.reply({
-            content: `✅ Moderator role set to <@&${role.id}>.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Moderator role set to <@&${role.id}>.`,
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -214,7 +222,14 @@ module.exports = {
           const role = interaction.options.getRole("role");
           await db.updateSettings(guildId, { "automod.muteRoleId": role.id });
           return interaction.reply({
-            content: `✅ Mute role set to <@&${role.id}>.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Mute role set to <@&${role.id}>.`,
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -229,7 +244,14 @@ module.exports = {
             [`warnActions.${count}`]: action,
           });
           return interaction.reply({
-            content: `✅ Warn action added: **${count} warns** -> **${action}**.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Warn action added: **${count} warns** -> **${action}**.`,
+                "Action Added",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -241,7 +263,14 @@ module.exports = {
             { $unset: { [`warnActions.${count}`]: "" } },
           );
           return interaction.reply({
-            content: `✅ Warn action for **${count} warns** removed.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Warn action for **${count} warns** removed.`,
+                "Action Removed",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -249,12 +278,22 @@ module.exports = {
           const actions = settings.warnActions || new Map();
           if (actions.size === 0)
             return interaction.reply({
-              content: "No warn actions configured.",
+              embeds: [
+                info(
+                  interaction.user,
+                  "No warn actions configured.",
+                  "Warn Actions",
+                  "⚙️ Configuration",
+                ),
+              ],
               flags: 64,
             });
-          const embed = new EmbedBuilder()
-            .setTitle("Warn Actions")
-            .setColor(0x00bfff);
+          const embed = info(
+            interaction.user,
+            "List of configured automatic actions for warnings.",
+            "Warn Actions",
+            "⚙️ Configuration",
+          );
           actions.forEach((val, key) =>
             embed.addFields({ name: `${key} warns`, value: val, inline: true }),
           );
@@ -263,7 +302,14 @@ module.exports = {
         if (sub === "reset") {
           await db.updateSettings(guildId, { warnActions: {} });
           return interaction.reply({
-            content: "✅ All warn actions have been reset.",
+            embeds: [
+              success(
+                interaction.user,
+                "All warn actions have been reset.",
+                "System Reset",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -278,7 +324,14 @@ module.exports = {
             "logs.enabled": true,
           });
           return interaction.reply({
-            content: `✅ Log channel set to <#${channel.id}>.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Log channel set to <#${channel.id}>.`,
+                "Logs Configured",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -289,7 +342,14 @@ module.exports = {
             [`logs.categories.${name}`]: state,
           });
           return interaction.reply({
-            content: `✅ Log category **${name}** is now **${state ? "enabled" : "disabled"}**.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Log category **${name}** is now **${state ? "enabled" : "disabled"}**.`,
+                "Category Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -314,7 +374,14 @@ module.exports = {
           categories.forEach((c) => (updates[`logs.categories.${c}`] = true));
           await db.updateSettings(guildId, updates);
           return interaction.reply({
-            content: "✅ All log categories enabled.",
+            embeds: [
+              success(
+                interaction.user,
+                "All log categories have been **enabled**.",
+                "System Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -339,14 +406,24 @@ module.exports = {
           categories.forEach((c) => (updates[`logs.categories.${c}`] = false));
           await db.updateSettings(guildId, updates);
           return interaction.reply({
-            content: "✅ All log categories disabled.",
+            embeds: [
+              success(
+                interaction.user,
+                "All log categories have been **disabled**.",
+                "System Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
         if (sub === "status") {
-          const embed = new EmbedBuilder()
-            .setTitle("Log Config Status")
-            .setColor(0x00bfff);
+          const embed = info(
+            interaction.user,
+            "",
+            "Logging Configuration Status",
+            "⚙️ Configuration",
+          );
           embed.addFields({
             name: "Enabled",
             value: settings.logs?.enabled ? "✅" : "❌",
@@ -379,7 +456,14 @@ module.exports = {
           if (enabled !== null) updates["autorole.enabled"] = enabled;
           await db.updateSettings(guildId, updates);
           return interaction.reply({
-            content: "✅ Autorole settings updated.",
+            embeds: [
+              success(
+                interaction.user,
+                "Autorole settings have been updated.",
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -391,7 +475,14 @@ module.exports = {
           if (enabled !== null) updates["welcome.enabled"] = enabled;
           await db.updateSettings(guildId, updates);
           return interaction.reply({
-            content: "✅ Welcome settings updated.",
+            embeds: [
+              success(
+                interaction.user,
+                "Welcome message settings have been updated.",
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -403,7 +494,14 @@ module.exports = {
           if (enabled !== null) updates["farewell.enabled"] = enabled;
           await db.updateSettings(guildId, updates);
           return interaction.reply({
-            content: "✅ Farewell settings updated.",
+            embeds: [
+              success(
+                interaction.user,
+                "Farewell message settings have been updated.",
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
@@ -417,15 +515,29 @@ module.exports = {
             "marriageConfig.announcementChannel": channel.id,
           });
           return interaction.reply({
-            content: `✅ Marriage announcement channel set to <#${channel.id}>.`,
+            embeds: [
+              success(
+                interaction.user,
+                `Marriage announcement channel set to <#${channel.id}>.`,
+                "Config Updated",
+                "⚙️ Configuration",
+              ),
+            ],
             flags: 64,
           });
         }
       }
-    } catch (error) {
-      console.error("Config command error:", error);
+    } catch (err) {
+      console.error("Config command error:", err);
       await interaction.reply({
-        content: "❌ An error occurred during configuration.",
+        embeds: [
+          error(
+            interaction.user,
+            "An error occurred during configuration.",
+            "Config Error",
+            "⚙️ Configuration",
+          ),
+        ],
         flags: 64,
       });
     }

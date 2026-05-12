@@ -11,7 +11,6 @@ const db = require("./db.js");
 const UpdateChecker = require("./update-checker.js");
 const { config } = require("./utils/env.js");
 const { loadCommands } = require("./utils/commandLoader.js");
-const WebDashboard = require("./web/server.js");
 
 class Bot extends Client {
   constructor() {
@@ -28,7 +27,6 @@ class Bot extends Client {
 
     this.commands = new Collection();
     this.updateChecker = new UpdateChecker(this);
-    this.dashboard = new WebDashboard(this);
 
     // Load and compile banwords
     try {
@@ -76,13 +74,6 @@ class Bot extends Client {
       console.log(`Logged in as ${this.user.tag}`);
       this.updateChecker.start();
     });
-
-    // 5. Start Web Dashboard
-    if (process.env.DISABLE_WEB !== "true") {
-      this.dashboard.start();
-    } else {
-      console.log("Web Dashboard is disabled via flag.");
-    }
 
     // 6. Handle Shutdown
     this.setupGracefulShutdown();

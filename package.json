@@ -6,11 +6,9 @@
     "start": "node src/index.js",
     "dev": "DEPLOY_COMMANDS=false node src/index.js",
     "prod": "npm start",
-    "test:ui": "node tests/test-ui.js",
     "db:check": "node -e 'require(\"./src/db.js\").ensureDatabaseIsRunning()'",
     "db:systemd": "npm run db:check",
     "db:docker": "docker-compose up -d db",
-    "start:noweb": "DISABLE_WEB=true npm start",
     "start:crash": "CRASH_MODE=true npm start",
     "check": "npm run check:syntax",
     "check:syntax": "node --check src/index.js",
@@ -19,21 +17,10 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "bcrypt": "^5.1.0",
-    "connect-mongo": "^4.6.0",
-    "cookie-parser": "^1.4.6",
-    "cors": "^2.8.5",
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
-    "ejs": "^3.1.10",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.4.0",
-    "node-fetch": "^2.6.7",
-    "passport": "^0.4.1",
-    "passport-discord": "^0.1.4",
-    "passport-local": "^1.0.0"
+    "node-fetch": "^2.6.7"
   },
   "devDependencies": {
     "eslint": "^8.57.0",

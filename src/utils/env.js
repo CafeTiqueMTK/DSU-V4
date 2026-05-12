@@ -14,12 +14,8 @@ if (!isProduction) {
 const requiredEnvVars = [
   "DISCORD_TOKEN",
   "CLIENT_ID",
-  "CLIENT_SECRET",
-  "CALLBACK_URL",
   "MONGODB_URI",
   "OWNER_ID",
-  "WEB_PORT",
-  "SESSION_SECRET",
 ];
 
 function validateEnv() {
@@ -43,23 +39,11 @@ const config = {
   get clientId() {
     return process.env.CLIENT_ID;
   },
-  get clientSecret() {
-    return process.env.CLIENT_SECRET;
-  },
-  get callbackUrl() {
-    return process.env.CALLBACK_URL;
-  },
   get ownerId() {
     return process.env.OWNER_ID;
   },
   get mongoUri() {
     return process.env.MONGODB_URI;
-  },
-  get webPort() {
-    return parseInt(process.env.WEB_PORT, 10) || 3000;
-  },
-  get sessionSecret() {
-    return process.env.SESSION_SECRET || "dsu-v4-secret";
   },
   get githubOwner() {
     return process.env.GITHUB_OWNER || "CafeTiqueMTK";
@@ -80,6 +64,12 @@ const config = {
   },
   get githubToken() {
     return process.env.GITHUB_TOKEN;
+  },
+  get crashMode() {
+    return process.env.CRASH_MODE === "true";
+  },
+  get debug() {
+    return process.env.DEBUG === "true";
   },
 };
 

@@ -3,6 +3,7 @@ const {
   PermissionFlagsBits,
 } = require("discord.js");
 const db = require("../db.js");
+const { config } = require("../utils/env.js");
 const { getLogChannel } = require("../utils/logger");
 const { Colors, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
 
@@ -11,8 +12,8 @@ module.exports = {
   async execute(interaction) {
     const client = interaction.client;
 
-    // Crash Mode Simulation (Audit/CrashMode Fix)
-    if (process.env.CRASH_MODE === "true" && interaction.isChatInputCommand()) {
+    // Crash Mode Simulation (CrashMode Fix)
+    if (config.crashMode && interaction.isChatInputCommand()) {
         const shouldCrash = Math.random() < 0.3; // 30% chance to crash
         if (shouldCrash) {
             throw new Error("CRASH_MODE: Simulated internal script failure for testing stability.");
@@ -155,96 +156,11 @@ module.exports = {
           });
         }
       }
-
-      // --- Interactive Dashboard (Refactored) ---
-      else if (customId.startsWith("dash_")) {
-        // DB Readiness Check for Dashboard
-        if (!db.isReady) {
-            const { dbOffline } = require("../utils/embeds");
-            return await interaction.reply({ embeds: [dbOffline(user, "Dashboard")], flags: 64 });
-        }
-
-        const dashManager = require("../utils/dashboardManager");
-        const guildId = interaction.guild.id;
-
-        // Navigation
-        if (customId === "dash_main") {
-            const ui = await dashManager.getMainMenu(user, guildId);
-            return await interaction.update(ui);
-        }
-        if (customId === "dash_menu_mod") {
-            const ui = await dashManager.getModMenu(user, guildId);
-            return await interaction.update(ui);
-        }
-        if (customId === "dash_menu_gen") {
-            const ui = await dashManager.getGeneralMenu(user, guildId, client);
-            return await interaction.update(ui);
-        }
-        if (customId === "dash_menu_eco") {
-            const ui = await dashManager.getEcoMenu(user, guildId);
-            return await interaction.update(ui);
-        }
-        if (customId === "dash_menu_tickets") {
-            const ui = await dashManager.getTicketsMenu(user, guildId);
-            return await interaction.update(ui);
-        }
-        if (customId === "dash_close") {
-            return await interaction.message.delete().catch(() => {});
-        }
-
-        // Toggles
-        const settings = await db.getSettings(guildId);
-        let updates = {};
-
-        if (customId === "dash_toggle_automod") updates = { "automod.enabled": !settings.automod?.enabled };
-        else if (customId === "dash_toggle_logs") updates = { "logs.enabled": !settings.logs?.enabled };
-        else if (customId === "dash_toggle_antispam") updates = { "antiSpam.enabled": !settings.antiSpam?.enabled };
-        else if (customId === "dash_toggle_antiraid") updates = { "antiRaid.enabled": !settings.antiRaid?.enabled };
-        else if (customId === "dash_toggle_antilinks") updates = { "antiLinks.enabled": !settings.antiLinks?.enabled };
-        else if (customId === "dash_toggle_economy") updates = { "streak.enabled": !settings.streak?.enabled };
-        else if (customId === "dash_toggle_levels") updates = { "level.enabled": !settings.level?.enabled };
-        else if (customId === "dash_toggle_welcome") updates = { "welcome.enabled": !settings.welcome?.enabled };
-        else if (customId === "dash_toggle_farewell") updates = { "farewell.enabled": !settings.farewell?.enabled };
-
-        if (Object.keys(updates).length > 0) {
-            await db.updateSettings(guildId, updates);
-            // Refresh current view
-            let ui;
-            if (customId.includes("eco") || customId.includes("levels")) ui = await dashManager.getEcoMenu(user, guildId);
-            else if (customId.includes("mod") || customId.includes("logs") || customId.includes("anti")) ui = await dashManager.getModMenu(user, guildId);
-            else if (customId.includes("welcome") || customId.includes("farewell")) ui = await dashManager.getGeneralMenu(user, guildId, client);
-            else ui = await dashManager.getMainMenu(user, guildId);
-
-            return await interaction.update(ui);
-        }
-      }
     }
 
     // Handle Select Menus
     else if (interaction.isStringSelectMenu()) {
-        const { customId, guild, user, values } = interaction;
-
-        if (customId.startsWith("dash_select_")) {
-            // DB Readiness Check
-            if (!db.isReady) {
-                const { dbOffline } = require("../utils/embeds");
-                return await interaction.reply({ embeds: [dbOffline(user, "Dashboard")], flags: 64 });
-            }
-
-            const dashManager = require("../utils/dashboardManager");
-            const guildId = guild.id;
-            let updates = {};
-
-            if (customId === "dash_select_welcome_channel") {
-                updates = { "welcome.channel": values[0] };
-            }
-
-            if (Object.keys(updates).length > 0) {
-                await db.updateSettings(guildId, updates);
-                const ui = await dashManager.getGeneralMenu(user, guildId, client);
-                return await interaction.update(ui);
-            }
-        }
+        // Handle select menus here
     }
 
     // Handle Modal Submissions

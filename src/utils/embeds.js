@@ -4,17 +4,25 @@ const { EmbedBuilder } = require("discord.js");
  * Standard colors for the bot's embeds.
  */
 const Colors = {
+  // Positive / Success
+  SUCCESS: 0x2ecc71,    // Green (Success, Deban, Demute)
+
+  // Neutral / Info
   INFO: 0x3498db,       // Blue
-  SUCCESS: 0x2ecc71,    // Green
-  ERROR: 0xe74c3c,      // Red
-  WARNING: 0xf1c40f,    // Yellow
+  NEUTRAL: 0x95a5a6,    // Grey
+
+  // Warnings / Minor Errors
+  WARNING: 0xf1c40f,    // Yellow (Warn)
+  NON_FATAL: 0xe67e22,  // Orange (Mute, Kick, Non-fatal error)
+
+  // Critical / Negative
+  ERROR: 0xe74c3c,      // Red (Critical error)
+  BAN: 0xc0392b,        // Dark Red (Ban)
+
+  // Module Specific (Fallback to palette if needed)
   ECONOMY: 0xf1c40f,    // Gold
-  MODERATION: 0x2c3e50, // Dark blue/grey
-  AUTOMOD: 0xff0000,    // Red (Authority)
   TICKETS: 0x3498db,    // Blue
   FUN: 0x9b59b6,        // Purple
-  ADMIN: 0x34495e,      // Darker grey
-  NEUTRAL: 0x95a5a6,    // Grey
 };
 
 /**
@@ -84,12 +92,31 @@ function success(user, description, title = "Success", moduleName = null) {
 }
 
 /**
+ * Generates a joke based on failure percentage.
+ * @returns {string}
+ */
+function getFailureJoke() {
+  const jokes = [
+    { threshold: 90, text: "Even my source code felt that one. 🤕" },
+    { threshold: 75, text: "This wasn't supposed to happen, but let's call it a feature. 🤡" },
+    { threshold: 50, text: "Error 404: My talent was not found. 💨" },
+    { threshold: 25, text: "I tried to be smart, but my processor said no. 🧠🚫" },
+    { threshold: 10, text: "Oops. This is awkward. 😅" },
+    { threshold: 0, text: "Just a glitch in the matrix. 🌌" }
+  ];
+
+  const roll = Math.floor(Math.random() * 100);
+  const joke = jokes.find(j => roll >= j.threshold);
+  return `${joke.text} (${roll}% chance of critical failure)`;
+}
+
+/**
  * Creates an error embed.
  */
 function error(user, description, title = "Error", moduleName = null) {
   return createBaseEmbed(user, {
     title: `${Emojis.ERROR} ${title}`,
-    description,
+    description: `${description}\n\n*${getFailureJoke()}*`,
     color: Colors.ERROR,
     module: moduleName
   });
@@ -133,10 +160,10 @@ function createLogEmbed(title, description, color = Colors.INFO, fields = [], mo
  * Creates a critical bot failure embed (Bright Red).
  * M-3 Fix: Do not leak raw error messages to users.
  */
-function botFailure(errorType) {
+function botFailure(errorType, details = "") {
   return new EmbedBuilder()
     .setTitle("⚠️ PARTIAL FAILURE")
-    .setDescription(`**Warning:** ${errorType}\n\nThis specific module is currently unavailable, but the core system remains operational. The administrator has been notified.`)
+    .setDescription(`**Warning:** ${errorType}\n${details ? `\n${details}\n` : ""}\n*${getFailureJoke()}*`)
     .setColor(0xe67e22) // ORANGE (Partial failure is less severe than total)
     .addFields({ name: "🛡️ Stability System", value: "The Core remains active. Only this module is affected." })
     .setTimestamp();

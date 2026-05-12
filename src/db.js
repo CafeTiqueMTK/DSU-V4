@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
-const { execSync } = require("child_process");
+const { exec } = require("child_process");
+const { promisify } = require("util");
+const execAsync = promisify(exec);
 const { config } = require("./utils/env.js");
 const GuildSetting = require("./models/GuildSetting.js");
 const { log } = require("./utils/logger");
@@ -27,7 +29,7 @@ class Database {
 
     // Automatic Database Start (if applicable)
     if (process.platform === "linux" && !process.env.DOCKER_CONTAINER) {
-      this.ensureDatabaseIsRunning();
+      await this.ensureDatabaseIsRunning();
     }
 
     if (!config.mongoUri) {
@@ -58,27 +60,40 @@ class Database {
 
   async shutdown() {
     if (!this.isReady) return;
+
+    // Flush XP Buffer before disconnecting
+    try {
+      log.info("Flushing economy buffer before shutdown...");
+      await this.economy.shutdown();
+    } catch (err) {
+      log.error("Error during economy shutdown:", err);
+    }
+
     await mongoose.disconnect();
     this.isReady = false;
     log.info("Disconnected from MongoDB.");
   }
 
-  ensureDatabaseIsRunning() {
+  async ensureDatabaseIsRunning() {
     try {
       log.info("🔍 Checking MongoDB service...");
       let hasSystemd = false;
       try {
-        hasSystemd = execSync("systemctl list-unit-files mongod.service", { stdio: "pipe" }).toString().includes("mongod.service");
+        const { stdout } = await execAsync("systemctl list-unit-files mongod.service");
+        hasSystemd = stdout.includes("mongod.service");
       } catch (e) {
         hasSystemd = false;
       }
 
       if (hasSystemd) {
         log.info("📡 Systemd service detected.");
-        const isActive = execSync("systemctl is-active mongod", { stdio: "pipe" }).toString().trim() === "active";
+        const { stdout } = await execAsync("systemctl is-active mongod");
+        const isActive = stdout.trim() === "active";
         if (!isActive) {
           log.warn("⚠️ MongoDB (systemd) is stopped. Attempting to start...");
-          execSync("sudo systemctl start mongod", { stdio: "inherit" });
+          // Using sudo might require interactive password, which is not ideal for a bot
+          // but we keep the logic consistent with previous implementation
+          await execAsync("sudo systemctl start mongod");
           log.success("✅ MongoDB (systemd) started successfully.");
         } else {
           log.success("✅ MongoDB (systemd) is already running.");
@@ -89,7 +104,7 @@ class Database {
       // Fallback to Docker
       log.info("🐳 Systemd service not found. Attempting to start via Docker...");
       try {
-        execSync("docker-compose up -d db", { stdio: "inherit" });
+        await execAsync("docker-compose up -d db");
         log.success("✅ MongoDB (docker) started successfully.");
       } catch (dockerErr) {
         log.warn(`❌ Docker fallback failed: ${dockerErr.message}`);

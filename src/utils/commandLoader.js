@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { config } = require("./env.js");
 
 function getCommandFiles(commandsPath) {
   if (!fs.existsSync(commandsPath)) return [];
@@ -25,8 +26,8 @@ function loadCommands(client, commandsPath, options = {}) {
   const commandsArray = [];
 
   for (const filePath of commandFiles) {
-    // Simulated Load Failure (Audit/CrashMode Fix)
-    if (process.env.CRASH_MODE === "true" && filePath.includes("fun.js")) {
+    // Simulated Load Failure (CrashMode Fix)
+    if (config.crashMode && filePath.includes("fun.js")) {
         console.warn(`[CRASH-MODE] Intentionally skipping load for: ${filePath}`);
         continue;
     }

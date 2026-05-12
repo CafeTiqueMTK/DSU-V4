@@ -15,20 +15,6 @@ const { config } = require("../utils/env.js");
 const { createBaseEmbed, success, error, info, Colors } = require("../utils/embeds");
 
 module.exports = [
-  // --- DASHBOARD ---
-  {
-    requiresDb: true,
-    data: new SlashCommandBuilder()
-      .setName("dashboard")
-      .setDescription("Interactive bot configuration dashboard")
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-    async execute(interaction) {
-      const dashManager = require("../utils/dashboardManager");
-      const ui = await dashManager.getMainMenu(interaction.user, interaction.guild.id);
-      await interaction.reply({ ...ui, flags: 64 });
-    },
-  },
-
   // --- EMBED BUILDER ---
   {
     data: new SlashCommandBuilder()

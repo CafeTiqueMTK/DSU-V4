@@ -7,7 +7,7 @@ const {
 } = require("discord.js");
 const fetch = require("node-fetch");
 const { getGuildData, saveGuildData } = require("../utils/guildManager");
-const { createBaseEmbed, Emojis, Colors } = require("../utils/embeds");
+const { createBaseEmbed, Emojis, Colors, error } = require("../utils/embeds");
 
 module.exports = [
   // --- CAT ---
@@ -26,7 +26,10 @@ module.exports = [
         });
         await interaction.reply({ embeds: [embed] });
       } catch {
-        await interaction.reply({ content: "Error fetching cat.", flags: 64 });
+        await interaction.reply({
+          embeds: [error(interaction.user, "Error fetching cat.", "API Error")],
+          flags: 64,
+        });
       }
     },
   },
@@ -47,7 +50,10 @@ module.exports = [
         });
         await interaction.reply({ embeds: [embed] });
       } catch {
-        await interaction.reply({ content: "Error fetching dog.", flags: 64 });
+        await interaction.reply({
+          embeds: [error(interaction.user, "Error fetching dog.", "API Error")],
+          flags: 64,
+        });
       }
     },
   },
@@ -76,10 +82,14 @@ module.exports = [
           title: post.title,
           image: post.url,
           color: Colors.FUN,
-        }).setFooter({ text: `r/${sub} | u/${post.author} | Requested by ${interaction.user.tag}` });
+        }).setFooter({
+          text: `r/${sub} | u/${post.author} | Requested by ${interaction.user.tag}`,
+        });
         await interaction.editReply({ embeds: [embed] });
       } catch {
-        await interaction.editReply("Error fetching meme.");
+        await interaction.editReply({
+          embeds: [error(interaction.user, "Error fetching meme.", "API Error")],
+        });
       }
     },
   },
@@ -99,7 +109,10 @@ module.exports = [
       const challenger = interaction.user;
       const opponent = interaction.options.getUser("opponent");
       if (challenger.id === opponent.id || opponent.bot)
-        return interaction.reply({ content: "Invalid opponent.", flags: 64 });
+        return interaction.reply({
+          embeds: [error(interaction.user, "Invalid opponent.", "Game Error")],
+          flags: 64,
+        });
 
       const embed = createBaseEmbed(interaction.user, {
         title: "🎮 RPS Challenge!",
@@ -194,18 +207,69 @@ module.exports = [
       const sub = interaction.options.getSubcommand();
       const user = interaction.options.getUser("user");
       const pct = Math.floor(Math.random() * 101);
-      
-      let emoji = "🤔";
-      if (pct > 80) emoji = "🔥";
-      else if (pct > 50) emoji = "👍";
-      else if (pct > 20) emoji = "👎";
-      else emoji = "💀";
+
+      // Visual progress bar
+      const progress = Math.round(pct / 10);
+      const bar = "🟩".repeat(progress) + "⬜".repeat(10 - progress);
+
+      // Personality & Style based on percentage
+      let config = {
+        color: Colors.NEUTRAL,
+        emoji: "🤔",
+        message: "That's... interesting.",
+      };
+
+      if (pct >= 90) {
+        config = {
+          color: Colors.SUCCESS,
+          emoji: "👑",
+          message: `INCREDIBLE! **${user.username}** is at the top of the food chain.`,
+        };
+      } else if (pct >= 75) {
+        config = {
+          color: Colors.SUCCESS,
+          emoji: "🔥",
+          message: `Not bad at all! **${user.username}** has massive potential.`,
+        };
+      } else if (pct >= 50) {
+        config = {
+          color: Colors.INFO,
+          emoji: "👍",
+          message: `Right in the average. **${user.username}** is a safe bet.`,
+        };
+      } else if (pct >= 25) {
+        config = {
+          color: Colors.WARNING,
+          emoji: "🤨",
+          message: `We've seen better... but we've seen worse (hopefully).`,
+        };
+      } else if (pct >= 10) {
+        config = {
+          color: Colors.NON_FATAL,
+          emoji: "📉",
+          message: `Ouch. This is awkward. Let's pretend we saw nothing.`,
+        };
+      } else {
+        config = {
+          color: Colors.ERROR,
+          emoji: "💀",
+          message: `CRITICAL ERROR. **${user.username}** broke my algorithms, it's that low.`,
+        };
+      }
 
       const embed = createBaseEmbed(interaction.user, {
-        title: `${sub.charAt(0).toUpperCase() + sub.slice(1)} Rater`,
-        description: `**${user.username}** is **${pct}%** ${sub}! ${emoji}`,
-        color: Colors.FUN,
+        module: "🎭 Entertainment",
+        title: `${config.emoji} Rater Machine : ${sub.toUpperCase()}`,
+        description: [
+          `**Target:** ${user}`,
+          `**Result:** \`${pct}%\``,
+          `**Status:** ${bar}`,
+          "",
+          `> ${config.message}`,
+        ].join("\n"),
+        color: config.color,
       });
+
       await interaction.reply({ embeds: [embed] });
     },
   },

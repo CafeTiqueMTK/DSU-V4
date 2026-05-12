@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require("discord.js");
 const { Colors } = require("./embeds.js");
+const { config } = require("./env.js");
 const fs = require("fs");
 const path = require("path");
 
@@ -88,7 +89,7 @@ class Logger {
   }
 
   debug(message) {
-    if (process.env.DEBUG === "true") {
+    if (config.debug) {
       const msg = this._format("DEBUG", message, ANSI.MAGENTA);
       process.stdout.write(msg + "\n");
       this._toFile("DEBUG", message);
