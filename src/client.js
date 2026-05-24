@@ -28,6 +28,23 @@ class Bot extends Client {
     this.commands = new Collection();
     this.updateChecker = new UpdateChecker(this);
 
+    // Initialize services
+    const EconomyService = require("./modules/economy/EconomyService");
+    const ModerationService = require("./modules/moderation/ModerationService");
+    const MarriageService = require("./modules/marriage/MarriageService");
+    const TicketService = require("./modules/tickets/TicketService");
+    const RoleService = require("./modules/roles/RoleService");
+    const FormService = require("./modules/forms/FormService");
+
+    db.setServices(
+        new EconomyService(db),
+        new ModerationService(db),
+        new MarriageService(db),
+        new TicketService(db),
+        new RoleService(db),
+        new FormService(db)
+    );
+
     // Load and compile banwords
     try {
       const banwordPath = path.join(process.cwd(), "data", "banword.json");
@@ -69,11 +86,11 @@ class Bot extends Client {
       await this.deployCommands();
     }
 
-    // 4. Setup Ready Event
-    this.once("ready", () => {
-      console.log(`Logged in as ${this.user.tag}`);
-      this.updateChecker.start();
-    });
+    // 4. Setup Ready Event (Logic moved to src/events/ready.js)
+    // this.once(Events.ClientReady, () => {
+    //   console.log(`Logged in as ${this.user.tag}`);
+    //   this.updateChecker.start();
+    // });
 
     // 6. Handle Shutdown
     this.setupGracefulShutdown();
@@ -112,9 +129,15 @@ class Bot extends Client {
     for (const file of eventFiles) {
       try {
         const event = require(path.join(eventsPath, file));
-        const handler = (...args) => event.execute(...args);
-        if (event.once) this.once(event.name, handler);
-        else this.on(event.name, handler);
+        if (event.once) {
+          this.once(event.name, (...args) => {
+            try { event.execute(...args); } catch (err) { console.error(`[EVENT] Error in once event ${event.name}:`, err); }
+          });
+        } else {
+          this.on(event.name, async (...args) => {
+            try { await event.execute(...args); } catch (err) { console.error(`[EVENT] Error in event ${event.name}:`, err); }
+          });
+        }
       } catch (err) {
         console.warn(`[WARN] Failed to load event ${file}: ${err.message}`);
       }

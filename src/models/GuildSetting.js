@@ -50,9 +50,42 @@ const guildSettingsSchema = new Schema(
     },
 
     // Tickets & Reaction Roles
-    tickets: { type: Map, of: Schema.Types.Mixed, default: {} },
-    reactionRoles: { type: Map, of: Schema.Types.Mixed, default: {} },
-    warnActions: { type: Map, of: String, default: {} },
+    tickets: {
+      setup: { type: Boolean, default: false },
+      supportRole: { type: String, default: null },
+      ticketsCategory: { type: String, default: null },
+      welcomeMessage: {
+        type: String,
+        default: "Welcome to your ticket! A support member will assist you soon.",
+      },
+      ticketPrefix: { type: String, default: "ticket" },
+      activeTickets: {
+        type: Map,
+        of: new Schema(
+          {
+            userId: { type: String },
+            channelId: { type: String },
+            createdAt: { type: Date },
+          },
+          { _id: false },
+        ),
+        default: {},
+      },
+    },
+    reactionRoles: {
+      type: Map,
+      of: new Schema(
+        {
+          channelId: { type: String },
+          messageId: { type: String },
+          roleId: { type: String },
+          emoji: { type: String },
+        },
+        { _id: false },
+      ),
+      default: {},
+    },
+    warnActions: { type: Map, of: String, default: {} }, // Map: warnCount -> action (e.g. "mute", "kick", "ban")
     moderatorRole: { type: String, default: null },
     marriageConfig: {
       announcementChannel: { type: String, default: null },

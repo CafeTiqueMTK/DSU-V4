@@ -5,7 +5,7 @@ const {
   EmbedBuilder,
 } = require("discord.js");
 const db = require("../db.js");
-const { success, error, Colors, Emojis } = require("../utils/embeds.js");
+const { success, error, Colors, Emojis, createBaseEmbed, info } = require("../utils/embeds.js");
 
 module.exports = [
   // --- MAIN MOD COMMAND (ban, kick, warn, mute) ---

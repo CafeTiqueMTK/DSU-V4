@@ -1,11 +1,8 @@
-const {
-  Events,
-  PermissionFlagsBits,
-} = require("discord.js");
+const { Events } = require("discord.js");
 const db = require("../db.js");
 const { config } = require("../utils/env.js");
 const { getLogChannel } = require("../utils/logger");
-const { Colors, createBaseEmbed, createLogEmbed, success, error, botFailure } = require("../utils/embeds");
+const { Colors, createLogEmbed, success, botFailure } = require("../utils/embeds");
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -48,34 +45,26 @@ module.exports = {
         await command.execute(interaction);
 // ... rest of the file
 
-        // Log command execution (async)
-        // ... (rest of the log logic)
-
-        // Log command execution (async)
-        getLogChannel(interaction.guild, "commands").then(logChannel => {
+        // Log command execution
+        try {
+          const logChannel = await getLogChannel(interaction.guild, "commands");
           if (logChannel) {
             const embed = createLogEmbed(
               "Command Executed",
               null,
               Colors.SUCCESS,
               [
-                {
-                  name: "Command",
-                  value: `\`/${interaction.commandName}\``,
-                  inline: true,
-                },
+                { name: "Command", value: `\`/${interaction.commandName}\``, inline: true },
                 { name: "User", value: `**${interaction.user.tag}**`, inline: true },
-                {
-                  name: "Channel",
-                  value: `<#${interaction.channel.id}>`,
-                  inline: true,
-                },
+                { name: "Channel", value: `<#${interaction.channel.id}>`, inline: true },
               ],
               "ℹ️ Command Logger"
             );
-            logChannel.send({ embeds: [embed] }).catch(() => {});
+            await logChannel.send({ embeds: [embed] }).catch(() => {});
           }
-        }).catch(() => {});
+        } catch (logErr) {
+          console.error("Failed to log command:", logErr);
+        }
       } catch (err) {
         console.error(`Error executing ${interaction.commandName}:`, err);
 
@@ -116,7 +105,7 @@ module.exports = {
 
     // Handle Button Interactions
     else if (interaction.isButton()) {
-      const { customId, guild, user } = interaction;
+      const { customId } = interaction;
 
       // --- Ticket System (Refactored) ---
       if (customId === "create_ticket") {
@@ -125,36 +114,9 @@ module.exports = {
         return await db.tickets.closeTicket(interaction);
       }
 
-      // --- Reaction Roles ---
+      // --- Reaction Roles (Delegated to Service) ---
       else if (customId.startsWith("reaction_role_")) {
-        const roleId = customId.replace("reaction_role_", "");
-        const role = guild.roles.cache.get(roleId);
-        if (!role)
-          return interaction.reply({
-            embeds: [error(user, "The requested role could not be found.", "Error", "🎭 Reaction Roles")],
-            flags: 64,
-          });
-
-        try {
-          if (interaction.member.roles.cache.has(roleId)) {
-            await interaction.member.roles.remove(role);
-            await interaction.reply({
-              embeds: [success(user, `The role **${role.name}** has been removed.`, "Role Removed", "🎭 Reaction Roles")],
-              flags: 64,
-            });
-          } else {
-            await interaction.member.roles.add(role);
-            await interaction.reply({
-              embeds: [success(user, `The role **${role.name}** has been added.`, "Role Added", "🎭 Reaction Roles")],
-              flags: 64,
-            });
-          }
-        } catch (e) {
-          await interaction.reply({
-            embeds: [error(user, "Failed to update your roles. Please check the bot's permissions.", "Error", "🎭 Reaction Roles")],
-            flags: 64,
-          });
-        }
+        return await db.handleReactionRole(interaction);
       }
     }
 
@@ -166,32 +128,7 @@ module.exports = {
     // Handle Modal Submissions
     else if (interaction.isModalSubmit()) {
       if (interaction.customId.startsWith("embedModal:")) {
-        // H-1: Permission Check
-        if (!interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)) {
-          return interaction.reply({
-            embeds: [error(interaction.user, "You lack permissions to send embeds via this system.", "Permission Denied", "🛡️ Security System")],
-            flags: 64
-          });
-        }
-
-        const channelId = interaction.customId.split(":")[1];
-        const channel = interaction.guild.channels.cache.get(channelId);
-        const title = interaction.fields.getTextInputValue("title");
-        const desc = interaction.fields.getTextInputValue("desc");
-        const colorInput = interaction.fields.getTextInputValue("color");
-        
-        const embed = createBaseEmbed(interaction.user, {
-          title,
-          description: desc,
-          color: colorInput && /^#[0-9A-F]{6}$/i.test(colorInput) ? parseInt(colorInput.replace("#", ""), 16) : Colors.INFO,
-        });
-        
-        if (channel) {
-          await channel.send({ embeds: [embed] });
-          await interaction.reply({ embeds: [success(interaction.user, `Embed sent to ${channel}.`, "Embed Sent", "📝 Modals")], flags: 64 });
-        } else {
-          await interaction.reply({ embeds: [error(interaction.user, "Target channel not found.", "Error", "📝 Modals")], flags: 64 });
-        }
+        return await db.handleEmbedModal(interaction);
       } else {
         await interaction.reply({
           embeds: [success(interaction.user, "Your submission has been received and processed.", "Submission Received", "📝 Modals")],

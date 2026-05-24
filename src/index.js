@@ -59,8 +59,7 @@ setInterval(async () => {
         await bot.start();
     } catch (err) {
         log.error("🛡️ [CORE] Fatal error during bot startup sequence:", err);
-        // We don't exit(1) here to allow the process to stay alive
-        // for debugging or potential manual recovery if parts are loaded.
+        process.exit(1);
     }
 })();
 

@@ -1,7 +1,4 @@
 const mongoose = require("mongoose");
-const { exec } = require("child_process");
-const { promisify } = require("util");
-const execAsync = promisify(exec);
 const { config } = require("./utils/env.js");
 const GuildSetting = require("./models/GuildSetting.js");
 const { log } = require("./utils/logger");
@@ -11,26 +8,20 @@ class Database {
     this.isReady = false;
     this.guildSettingsCache = new Map();
     this.legacyStores = new Map();
+  }
 
-    // Instantiate services with 'this' reference to avoid circular requires
-    const EconomyService = require("./modules/economy/EconomyService");
-    const ModerationService = require("./modules/moderation/ModerationService");
-    const MarriageService = require("./modules/marriage/MarriageService");
-    const TicketService = require("./modules/tickets/TicketService");
-
-    this.economy = new EconomyService(this);
-    this.moderation = new ModerationService(this);
-    this.marriage = new MarriageService(this);
-    this.tickets = new TicketService(this);
+  // Services are injected or instantiated elsewhere to decouple dependencies
+  setServices(economy, moderation, marriage, tickets, roles, forms) {
+    this.economy = economy;
+    this.moderation = moderation;
+    this.marriage = marriage;
+    this.tickets = tickets;
+    this.roles = roles;
+    this.forms = forms;
   }
 
   async init() {
     if (this.isReady) return;
-
-    // Automatic Database Start (if applicable)
-    if (process.platform === "linux" && !process.env.DOCKER_CONTAINER) {
-      await this.ensureDatabaseIsRunning();
-    }
 
     if (!config.mongoUri) {
       log.error("MONGODB_URI is not defined in environment variables.");
@@ -74,45 +65,8 @@ class Database {
     log.info("Disconnected from MongoDB.");
   }
 
-  async ensureDatabaseIsRunning() {
-    try {
-      log.info("🔍 Checking MongoDB service...");
-      let hasSystemd = false;
-      try {
-        const { stdout } = await execAsync("systemctl list-unit-files mongod.service");
-        hasSystemd = stdout.includes("mongod.service");
-      } catch (e) {
-        hasSystemd = false;
-      }
-
-      if (hasSystemd) {
-        log.info("📡 Systemd service detected.");
-        const { stdout } = await execAsync("systemctl is-active mongod");
-        const isActive = stdout.trim() === "active";
-        if (!isActive) {
-          log.warn("⚠️ MongoDB (systemd) is stopped. Attempting to start...");
-          // Using sudo might require interactive password, which is not ideal for a bot
-          // but we keep the logic consistent with previous implementation
-          await execAsync("sudo systemctl start mongod");
-          log.success("✅ MongoDB (systemd) started successfully.");
-        } else {
-          log.success("✅ MongoDB (systemd) is already running.");
-        }
-        return;
-      }
-
-      // Fallback to Docker
-      log.info("🐳 Systemd service not found. Attempting to start via Docker...");
-      try {
-        await execAsync("docker-compose up -d db");
-        log.success("✅ MongoDB (docker) started successfully.");
-      } catch (dockerErr) {
-        log.warn(`❌ Docker fallback failed: ${dockerErr.message}`);
-      }
-    } catch (err) {
-      log.warn(`⚠️ Database check failed: ${err.message}`);
-    }
-  }
+  // ensureDatabaseIsRunning() removed.
+  // Infrastructure management is now handled by container orchestration (docker-compose).
 
   // --- Guild Settings Logic (To be moved to a SettingsService later) ---
 
@@ -364,6 +318,9 @@ class Database {
   // --- Ticket Delegation ---
   async getTicketsConfig() { return this.tickets.getTicketsConfig(); }
   async saveTicketsConfig(config) { return this.tickets.saveTicketsConfig(config); }
+
+  async handleReactionRole(interaction) { return this.roles.handleReactionRole(interaction); }
+  async handleEmbedModal(interaction) { return this.forms.handleEmbedModal(interaction); }
 
   // --- Legacy / Misc ---
   async get(key) {

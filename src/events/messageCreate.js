@@ -9,11 +9,33 @@ module.exports = {
     if (message.author?.bot || !message.guild) return;
 
     const client = message.client;
+
+    if (!client._cleanupCounter) client._cleanupCounter = 0;
+    client._cleanupCounter++;
+    if (client._cleanupCounter >= 100) {
+        client._cleanupCounter = 0;
+        const now = Date.now();
+        for (const map of ['automodCooldown', 'spamMap', 'funnyCooldown']) {
+            const m = client[map];
+            if (m && m.size > 500) {
+                for (const [key, time] of m.entries()) {
+                    if (now - (Array.isArray(time) ? time[time.length-1] : time) > 60000) m.delete(key);
+                }
+            }
+        }
+    }
+
     const guildId = message.guild.id;
     const userId = message.author.id;
 
     // Fetch settings from MongoDB
-    const guildSettings = await db.getSettings(guildId);
+    let guildSettings;
+    try {
+      guildSettings = await db.getSettings(guildId);
+    } catch (error) {
+      console.error("Error fetching guild settings:", error);
+      return;
+    }
 
     // --- 1. Message Coins System (Converted to UserData) ---
     try {
@@ -54,7 +76,7 @@ module.exports = {
         if (!client.automodCooldown) client.automodCooldown = new Map();
 
         // Memory Protection: Granular Cleanup
-        if (client.automodCooldown.size > 1000) {
+        if (client.automodCooldown.size > 500) {
             const now = Date.now();
             for (const [key, time] of client.automodCooldown.entries()) {
                 if (now - time > 60000) client.automodCooldown.delete(key);
@@ -134,7 +156,7 @@ module.exports = {
         if (!client.spamMap) client.spamMap = new Map();
 
         // Memory Protection: Granular Cleanup
-        if (client.spamMap.size > 1000) {
+        if (client.spamMap.size > 500) {
             const now = Date.now();
             for (const [key, times] of client.spamMap.entries()) {
                 if (!times.length || now - times[times.length - 1] > 60000) client.spamMap.delete(key);
@@ -256,7 +278,7 @@ module.exports = {
           if (!client.funnyCooldown) client.funnyCooldown = new Map();
 
           // Memory Protection: Granular Cleanup
-          if (client.funnyCooldown.size > 1000) {
+          if (client.funnyCooldown.size > 500) {
               const now = Date.now();
               for (const [key, time] of client.funnyCooldown.entries()) {
                   if (now - time > 120000) client.funnyCooldown.delete(key);

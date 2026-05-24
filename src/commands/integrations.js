@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const db = require("../db.js");
 const fetch = require("node-fetch");
-const { createBaseEmbed, success, error, info, Emojis, Colors } = require("../utils/embeds");
+const config = require("../utils/env.js");
+const { createBaseEmbed, error } = require("../utils/embeds");
 
 // --- Helpers for GitHub ---
 async function getLanguageColor(language) {

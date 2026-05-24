@@ -6,5 +6,8 @@ module.exports = {
     execute(client) {
         console.log(`Bot is ready and logged in as ${client.user.tag}`);
         console.log('Bot is fully operational and listening for events.');
+        if (client.updateChecker) {
+            client.updateChecker.start();
+        }
     },
 };

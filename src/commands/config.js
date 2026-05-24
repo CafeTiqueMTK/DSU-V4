@@ -1,11 +1,10 @@
 const {
   SlashCommandBuilder,
   PermissionFlagsBits,
-  EmbedBuilder,
   ChannelType,
 } = require("discord.js");
 const db = require("../db.js");
-const { success, error, info, Colors } = require("../utils/embeds");
+const { success, error, info } = require("../utils/embeds");
 
 module.exports = {
   requiresDb: true,
