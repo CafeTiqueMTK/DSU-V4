@@ -86,8 +86,11 @@ tests/test-ui.js
 # AI & Documentation
 .ai/
 .claude/
+.opencode/
+.gemini/
 plan.md
 AI_*.md
+Modelfile
 
 # Sensitive data
 .env
