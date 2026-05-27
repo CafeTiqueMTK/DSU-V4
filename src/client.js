@@ -67,7 +67,7 @@ class Bot extends Client {
   }
 
   async start() {
-    console.log("Initializing DSU V4...");
+    console.log("Initializing DSU Preview...");
 
     // 1. Initialize Database
     try {

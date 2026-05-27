@@ -9,7 +9,7 @@ services:
     env_file: .env
     environment:
       # Overrides MONGO_URI to point to the 'db' service in the docker network
-      - MONGO_URI=mongodb://db:27017/dsu-v4
+      - MONGO_URI=mongodb://db:27017/dsu-preview
     depends_on:
       - db
     ports:

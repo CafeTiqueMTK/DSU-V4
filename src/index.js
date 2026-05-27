@@ -5,7 +5,7 @@ const path = require("path");
 const { getCommandFiles } = require("./utils/commandLoader");
 
 /**
- * DSU-V4 CORE SUPERVISOR
+ * DSU Preview CORE SUPERVISOR
  * This is the hyper-stable heart of the bot.
  * It must never crash and handles all top-level failures.
  */

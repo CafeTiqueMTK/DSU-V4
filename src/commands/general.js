@@ -175,11 +175,11 @@ module.exports = [
   {
     data: new SlashCommandBuilder()
       .setName("about")
-      .setDescription("About DSU-V4"),
+      .setDescription("About DSU"),
     async execute(interaction) {
       const embed = createBaseEmbed(interaction.user, { module: "ℹ️ General Info",
-        title: `📖 About DSU-V4`,
-        description: "DSU-V4 is a powerful, multi-purpose Discord bot designed to manage and enhance your server with advanced moderation, economy, and utility features.",
+        title: `📖 About DSU`,
+        description: "DSU is a powerful, multi-purpose Discord bot designed to manage and enhance your server with advanced moderation, economy, and utility features.",
         color: Colors.INFO,
       })
       .addFields(

@@ -1,4 +1,4 @@
-# DSU-V4 Documentation
+# DSU Preview Documentation
 
 ## 📜 Bot Commands
 
@@ -34,7 +34,7 @@
 - `/weather [city]` - Current weather information.
 - `/wiki [query]` - Search Wikipedia articles.
 - `/ping` - Check bot and API latency.
-- `/about` - Technical details about DSU-V4.
+- `/about` - Technical details about DSU Preview.
 
 ---
 

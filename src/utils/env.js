@@ -49,7 +49,7 @@ const config = {
     return process.env.GITHUB_OWNER || "CafeTiqueMTK";
   },
   get githubRepo() {
-    return process.env.GITHUB_REPO || "DSU-V4";
+    return process.env.GITHUB_REPO || "DSU Preview";
   },
   get dataPath() {
     return (
